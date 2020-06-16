@@ -1,0 +1,29 @@
+name: Ubuntu
+
+on: [push]
+
+jobs:
+  ci:
+    name: "CI"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install libcmocka-dev
+
+    - name: Compile release build
+      run: |
+        mkdir build-release
+        cd build-release
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+        cmake --build . --config Release
+
+    - name: Compile debug build
+      run: |
+        mkdir build-debug
+        cd build-debug
+        cmake -DCMAKE_BUILD_TYPE=Debug ..
+        cmake --build . --config Debug
