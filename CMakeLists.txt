@@ -46,21 +46,27 @@ endif ()
 option(JA_BUILD_TEST OFF)
 
 if (KA_BUILD_SHARED)
-	target_link_libraries("kansai" "japan")
 
 	if(NOT TARGET "japan")
 		# https://stackoverflow.com/a/42985142
+		add_subdirectory("./source/libjapan/")
 		target_include_directories("kansai" PRIVATE "./source/libjapan/include")
 	endif ()
+
+	target_link_libraries("kansai" "japan")
+
 endif ()
 
 if (KA_BUILD_STATIC)
-	target_link_libraries("kansai-static" "japan-static")
 
 	if(NOT TARGET "japan-static")
 		# https://stackoverflow.com/a/42985142
+		add_subdirectory("./source/libjapan/")
 		target_include_directories("kansai-static" PRIVATE "./source/libjapan/include")
 	endif ()
+
+	target_link_libraries("kansai-static" "japan-static")
+
 endif ()
 
 # SDL2
