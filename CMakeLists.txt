@@ -50,10 +50,10 @@ if (KA_BUILD_SHARED)
 	if(NOT TARGET "japan")
 		# https://stackoverflow.com/a/42985142
 		add_subdirectory("./source/libjapan/")
-		target_include_directories("kansai" PRIVATE "./source/libjapan/include")
 	endif ()
 
 	target_link_libraries("kansai" "japan")
+	target_include_directories("kansai" PRIVATE "./source/libjapan/include")
 
 endif ()
 
@@ -62,10 +62,10 @@ if (KA_BUILD_STATIC)
 	if(NOT TARGET "japan-static")
 		# https://stackoverflow.com/a/42985142
 		add_subdirectory("./source/libjapan/")
-		target_include_directories("kansai-static" PRIVATE "./source/libjapan/include")
 	endif ()
 
 	target_link_libraries("kansai-static" "japan-static")
+	target_include_directories("kansai-static" PRIVATE "./source/libjapan/include")
 
 endif ()
 
