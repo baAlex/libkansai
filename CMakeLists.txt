@@ -28,7 +28,10 @@ if (KA_EXPORT_SYMBOLS)
 endif ()
 
 set(SOURCES
+	"./source/context-agnostic.c"
+	"./source/context-sdl2.c"
 	"./source/version.c"
+	"./source/glad/glad.c"
 )
 
 if (KA_BUILD_SHARED)
@@ -40,19 +43,25 @@ if (KA_BUILD_STATIC)
 endif ()
 
 # LibJapan
-option(JA_EXPORT_SYMBOLS OFF)
-option(JA_BUILD_SHARED OFF)
 option(JA_BUILD_TEST OFF)
-
 add_subdirectory("./source/libjapan")
 
 if (KA_BUILD_SHARED)
+	target_link_libraries("kansai" "japan")
 	target_include_directories("kansai" PRIVATE "./source/libjapan/include")
-	target_link_libraries("kansai" "japan-static")
 endif ()
 
 if (KA_BUILD_STATIC)
-	target_include_directories("kansai-static" PRIVATE "./source/libjapan/include")
 	target_link_libraries("kansai-static" "japan-static")
+	target_include_directories("kansai-static" PRIVATE "./source/libjapan/include")
 endif ()
 
+# SDL2
+if (DEFINED VCPKG_TOOLCHAIN)
+	find_package(SDL2)
+	target_link_libraries("kansai" SDL2::SDL2 SDL2::SDL2main)
+else()
+	find_package(SDL2)
+	target_link_libraries("kansai" ${SDL2_LIBRARIES})
+	target_include_directories("kansai" PRIVATE ${SDL2_INCLUDE_DIR})
+endif()
