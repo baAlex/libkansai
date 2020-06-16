@@ -57,11 +57,26 @@ if (KA_BUILD_STATIC)
 endif ()
 
 # SDL2
+find_package(SDL2)
+
 if (DEFINED VCPKG_TOOLCHAIN)
-	find_package(SDL2)
-	target_link_libraries("kansai" SDL2::SDL2 SDL2::SDL2main)
+
+	if (KA_BUILD_SHARED)
+		target_link_libraries("kansai" SDL2::SDL2 SDL2::SDL2main)
+	endif ()
+
+	if (KA_BUILD_STATIC)
+		target_link_libraries("kansai-static" SDL2::SDL2 SDL2::SDL2main)
+	endif ()
+
 else()
-	find_package(SDL2)
-	target_link_libraries("kansai" ${SDL2_LIBRARIES})
-	target_include_directories("kansai" PRIVATE ${SDL2_INCLUDE_DIR})
+
+	if (KA_BUILD_SHARED)
+		target_link_libraries("kansai" ${SDL2_LIBRARIES})
+	endif ()
+
+	if (KA_BUILD_STATIC)
+		target_link_libraries("kansai-static" ${SDL2_LIBRARIES})
+	endif ()
+
 endif()
