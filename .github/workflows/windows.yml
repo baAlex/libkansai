@@ -11,7 +11,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        vcpkg install cmocka:x64-windows
+        git submodule init
+        git submodule update
 
     - name: Compile release build
       shell: cmd
