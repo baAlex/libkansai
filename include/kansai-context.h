@@ -17,14 +17,44 @@
 	#define KA_EXPORT // Whitespace
 #endif
 
+
+// <prefixed_api>
+
 #include <stdbool.h>
+
+#include "japan-configuration.h"
+#include "japan-status.h"
+
+struct kaEvents
+{
+	bool a, b, x, y;
+	bool lb, rb;
+	bool view, menu, guide; // TODO
+	bool ls, rs;            // TODO
+
+	struct { float h, v; } pad; // TODO
+	struct { float h, v, t; } left_analog; // TODO
+	struct { float h, v, t; } right_analog; // TODO
+};
+
+KA_EXPORT int kaContextStart(struct jaStatus* st);
+KA_EXPORT void kaContextStop();
+
+KA_EXPORT int kaContextUpdate(struct kaEvents* out_events);
+KA_EXPORT void kaSleep(int milliseconds);
+
+KA_EXPORT struct kaWindow* kaWindowCreate(const struct jaConfiguration*, const char* caption,
+                                          void (*close_callback)(const struct kaWindow*), struct jaStatus* st);
+KA_EXPORT void kaWindowDelete(struct kaWindow* window);
+
+// </prefixed_api>
+
+
 #include <stddef.h>
 
 #include "japan-aabounding.h"
-#include "japan-configuration.h"
 #include "japan-image.h"
 #include "japan-matrix.h"
-#include "japan-status.h"
 #include "japan-vector.h"
 
 enum Filter
@@ -64,34 +94,7 @@ struct Texture
 	unsigned int glptr;
 };
 
-struct ContextEvents
-{
-	// Input
-	bool a, b, x, y;
-	bool lb, rb;
-	bool view, menu, guide; // TODO
-	bool ls, rs;            // TODO
-
-	struct { float h, v; } pad;             // TODO
-	struct { float h, v, t; } left_analog;  // TODO
-	struct { float h, v, t; } right_analog; // TODO
-
-	// Window
-	bool close;
-	bool resized;                  // TODO
-	struct jaVector2i window_size; // TODO
-};
-
-
-// Context as object
-
-KA_EXPORT struct Context* ContextCreate(const struct jaConfiguration*, const char* caption, struct jaStatus* st);
-KA_EXPORT int ContextUpdate(struct Context* context, struct ContextEvents* out_events, struct jaStatus* st);
-KA_EXPORT void ContextDelete(struct Context* context);
-
-KA_EXPORT int TakeScreenshot(const struct Context* context, const char* filename, struct jaStatus* st);
-
-
+#if 0
 // Context state
 
 KA_EXPORT void SetProgram(struct Context* context, const struct Program* program);
@@ -140,4 +143,5 @@ KA_EXPORT void TextureFree(struct Texture* texture);
 
 #endif
 
+#endif
 #endif

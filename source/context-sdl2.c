@@ -36,142 +36,83 @@ SOFTWARE.
 #define WINDOW_MIN_HEIGHT 240
 
 
-static int s_sdl_references = 0;
-
-
-struct Context* ContextCreate(const struct jaConfiguration* cfg, const char* caption, struct jaStatus* st)
+int kaContextStart(struct jaStatus* st)
 {
-	struct Context* context = NULL;
-	SDL_version sdl_version = {0};
-
-	jaStatusSet(st, "ContextCreate", JA_STATUS_SUCCESS, NULL);
-
-	if ((context = malloc(sizeof(struct Context))) == NULL)
-	{
-		jaStatusSet(st, "ContextCreate", JA_STATUS_MEMORY_ERROR, NULL);
-		goto return_failure;
-	}
-
-	memset(context, 0, sizeof(struct Context));
-
-	// Print version
-	SDL_GetVersion(&sdl_version);
-	printf(" - LibSDL2 %i.%i.%i\n", sdl_version.major, sdl_version.minor, sdl_version.patch);
-
-	// SDL Initialization
-	s_sdl_references += 1;
+	jaStatusSet(st, "kaContextStart", JA_STATUS_SUCCESS, NULL);
 
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	{
-		s_sdl_references -= 1;
-
 		fprintf(stderr, "\n%s\n", SDL_GetError());
-		jaStatusSet(st, "ContextCreate", JA_STATUS_ERROR, "SDL_Init()");
-		goto return_failure;
+		jaStatusSet(st, "kaContextStart", JA_STATUS_ERROR, "SDL_Init()");
+		return 1;
 	}
 
-	if ((context->window = SDL_CreateWindow(caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH,
-	                                        WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE)) == NULL)
-	{
-		fprintf(stderr, "\n%s\n", SDL_GetError());
-		jaStatusSet(st, "ContextCreate", JA_STATUS_ERROR, "SDL_CreateWindow()");
-		goto return_failure;
-	}
-
-	if ((context->gl_context = SDL_GL_CreateContext(context->window)) == NULL)
-	{
-		fprintf(stderr, "\n%s\n", SDL_GetError());
-		jaStatusSet(st, "ContextCreate", JA_STATUS_ERROR, "SDL_GL_CreateContext()");
-		goto return_failure;
-	}
-
-	SDL_SetWindowMinimumSize(context->window, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
-	SDL_GL_SetSwapInterval((context->cfg_vsync == true) ? 1 : 0);
-
-	// Initialize GLAD (after context creation)
-	if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0)
-	{
-		jaStatusSet(st, "ContextCreate", JA_STATUS_ERROR, "gladLoad()");
-		goto return_failure;
-	}
-
-	printf(" - %s\n", glGetString(GL_VENDOR));
-	printf(" - %s\n", glGetString(GL_RENDERER));
-	printf(" - %s\n\n", glGetString(GL_VERSION));
-
-	glDisable(GL_DITHER);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
-	glEnableVertexAttribArray(ATTRIBUTE_POSITION);
-	glEnableVertexAttribArray(ATTRIBUTE_UV);
-
-	glClear(GL_COLOR_BUFFER_BIT);
-	SDL_GL_SwapWindow(context->window);
-
-	// Bye!
-	context->events.window_size.x = WINDOW_WIDTH;
-	context->events.window_size.y = WINDOW_HEIGHT;
-
-	return context;
-
-return_failure:
-	if (context != NULL)
-		ContextDelete(context);
-
-	return NULL;
+	g_context.sdl_references += 1;
+	return 0;
 }
 
 
-void ContextDelete(struct Context* context)
+void kaContextStop()
 {
-	if (context->gl_context != NULL)
-		SDL_GL_DeleteContext(context->gl_context);
+	g_context.sdl_references -= 1;
 
-	if (context->window != NULL)
-		SDL_DestroyWindow(context->window);
-
-	free(context);
-
-	if (s_sdl_references > 0)
+	if (g_context.sdl_references == 0)
 	{
-		s_sdl_references -= 1;
+		if (g_context.windows.items_no != 0)
+			fprintf(stderr, "Deleting %s...\n", (g_context.windows.items_no > 1) ? "windows" : "window");
 
-		if (s_sdl_references == 0)
-			SDL_Quit();
+		while (g_context.windows.items_no != 0)
+			kaWindowDelete((struct kaWindow*)(g_context.windows.last->data));
+
+		SDL_Quit();
+		memset(&g_context, 0, sizeof(struct Context));
 	}
 }
 
 
-int ContextUpdate(struct Context* context, struct ContextEvents* out_events, struct jaStatus* st)
+int kaContextUpdate(struct kaEvents* out_events)
 {
 	SDL_Event e = {0};
 
+	// Refuse to work whitout a window
+	if (g_context.windows.items_no == 0)
+		return 1;
+
 	// Update screen
-	SDL_GL_SwapWindow(context->window);
-	glClear(GL_COLOR_BUFFER_BIT);
+	// SDL_GL_SwapWindow(context->window);
+	// glClear(GL_COLOR_BUFFER_BIT);
 
 	// Receive input
-	context->events.close = false;
-
 	while (SDL_PollEvent(&e) != 0)
 	{
 		if (e.type == SDL_WINDOWEVENT)
 		{
+			// Notify that the user want to close and delete window
 			if (e.window.event == SDL_WINDOWEVENT_CLOSE)
-				context->events.close = true;
+			{
+				for (struct jaListItem* item = g_context.windows.first; item != NULL; item = item->next)
+				{
+					struct kaWindow* window = item->data;
+
+					if (e.window.windowID == SDL_GetWindowID(window->sdl_window))
+					{
+						window->close_callback(window);
+						kaWindowDelete(window);
+						break;
+					}
+				}
+			}
 		}
 		else if (e.type == SDL_KEYDOWN)
 		{
 			switch (e.key.keysym.scancode)
 			{
-			case SDL_SCANCODE_A: context->events.a = true; break;
-			case SDL_SCANCODE_S: context->events.b = true; break;
-			case SDL_SCANCODE_Z: context->events.x = true; break;
-			case SDL_SCANCODE_X: context->events.y = true; break;
-			case SDL_SCANCODE_Q: context->events.lb = true; break;
-			case SDL_SCANCODE_W: context->events.rb = true; break;
+			case SDL_SCANCODE_A: out_events->a = true; break;
+			case SDL_SCANCODE_S: out_events->b = true; break;
+			case SDL_SCANCODE_Z: out_events->x = true; break;
+			case SDL_SCANCODE_X: out_events->y = true; break;
+			case SDL_SCANCODE_Q: out_events->lb = true; break;
+			case SDL_SCANCODE_W: out_events->rb = true; break;
 			default: break;
 			}
 		}
@@ -179,27 +120,128 @@ int ContextUpdate(struct Context* context, struct ContextEvents* out_events, str
 		{
 			switch (e.key.keysym.scancode)
 			{
-			case SDL_SCANCODE_A: context->events.a = false; break;
-			case SDL_SCANCODE_S: context->events.b = false; break;
-			case SDL_SCANCODE_Z: context->events.x = false; break;
-			case SDL_SCANCODE_X: context->events.y = false; break;
-			case SDL_SCANCODE_Q: context->events.lb = false; break;
-			case SDL_SCANCODE_W: context->events.rb = false; break;
+			case SDL_SCANCODE_A: out_events->a = false; break;
+			case SDL_SCANCODE_S: out_events->b = false; break;
+			case SDL_SCANCODE_Z: out_events->x = false; break;
+			case SDL_SCANCODE_X: out_events->y = false; break;
+			case SDL_SCANCODE_Q: out_events->lb = false; break;
+			case SDL_SCANCODE_W: out_events->rb = false; break;
 			default: break;
 			}
 		}
 	}
 
-	// Bye!
-	if (out_events != NULL)
-		memcpy(out_events, &context->events, sizeof(struct ContextEvents));
-
 	return 0;
 }
 
 
-int TakeScreenshot(const struct Context* context, const char* filename, struct jaStatus* st)
+void kaSleep(int milliseconds)
 {
+	SDL_Delay((Uint32)milliseconds);
+}
+
+
+struct kaWindow* kaWindowCreate(const struct jaConfiguration* cfg, const char* caption,
+                                void (*close_callback)(const struct kaWindow*), struct jaStatus* st)
+{
+	struct jaListItem* item = NULL;
+	struct kaWindow* window = NULL;
+	(void)cfg;
+
+	jaStatusSet(st, "kaWindowCreate", JA_STATUS_SUCCESS, NULL);
+
+	if ((item = jaListAdd(&g_context.windows, NULL, sizeof(struct kaWindow))) == NULL)
+	{
+		jaStatusSet(st, "kaWindowCreate", JA_STATUS_MEMORY_ERROR, NULL);
+		goto return_failure;
+	}
+
+	window = item->data;
+	memset(window, 0, sizeof(struct kaWindow));
+
+	window->item = item;
+	window->close_callback = close_callback;
+
+	if ((window->sdl_window = SDL_CreateWindow(caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH,
+	                                           WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE)) == NULL)
+	{
+		fprintf(stderr, "\n%s\n", SDL_GetError());
+		jaStatusSet(st, "kaWindowCreate", JA_STATUS_ERROR, "SDL_CreateWindow()");
+		goto return_failure;
+	}
+
+	if ((window->gl_context = SDL_GL_CreateContext(window->sdl_window)) == NULL)
+	{
+		fprintf(stderr, "\n%s\n", SDL_GetError());
+		jaStatusSet(st, "kaWindowCreate", JA_STATUS_ERROR, "SDL_GL_CreateContext()");
+		goto return_failure;
+	}
+
+	if (SDL_GL_MakeCurrent(window->sdl_window, window->gl_context) != 0)
+	{
+		fprintf(stderr, "\n%s\n", SDL_GetError());
+		jaStatusSet(st, "kaWindowCreate", JA_STATUS_ERROR, "SDL_GL_MakeCurrent()");
+		goto return_failure;
+	}
+
+	SDL_SetWindowMinimumSize(window->sdl_window, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
+	SDL_GL_SetSwapInterval((window->cfg_vsync == true) ? 1 : 0);
+
+	// Initialize GLAD (after context creation)
+	// FIXME, this probably don't survive to multiple contexts
+	if (g_context.windows.items_no == 1)
+	{
+		if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0)
+		{
+			jaStatusSet(st, "kaWindowCreate", JA_STATUS_ERROR, "gladLoad()");
+			goto return_failure;
+		}
+
+		printf("\n%s\n", glGetString(GL_VENDOR));
+		printf("%s\n", glGetString(GL_RENDERER));
+		printf("%s\n\n", glGetString(GL_VERSION));
+	}
+
+	glDisable(GL_DITHER);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+	glEnableVertexAttribArray(ATTRIBUTE_POSITION);
+	glEnableVertexAttribArray(ATTRIBUTE_UV);
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	SDL_GL_SwapWindow(window->sdl_window);
+
+	// Bye!
+	return window;
+
+return_failure:
+	return NULL;
+}
+
+
+void kaWindowDelete(struct kaWindow* window)
+{
+	if (window->gl_context != NULL)
+		SDL_GL_DeleteContext(window->gl_context);
+
+	if (window->sdl_window != NULL)
+		SDL_DestroyWindow(window->sdl_window);
+
+	jaListRemove(window->item);
+}
+
+
+int kaTakeScreenshot(const struct kaWindow* window, const char* filename, struct jaStatus* st)
+{
+	(void)window;
+	(void)filename;
+	(void)st;
+	return 1;
+
+#if 0
 	struct jaImage* image = NULL;
 	GLenum error;
 
@@ -247,4 +289,5 @@ return_failure:
 		jaImageDelete(image);
 
 	return 1;
+#endif
 }

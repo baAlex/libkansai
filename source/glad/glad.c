@@ -7,7 +7,7 @@
     APIs: gles2=2.0
     Profile: core
     Extensions:
-        
+
     Loader: True
     Local files: True
     Omit khrplatform: False
@@ -23,6 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "glad.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 
 struct gladGLversionStruct GLVersion = { 0, 0 };
 
@@ -473,3 +476,4 @@ int gladLoadGLES2Loader(GLADloadproc load) {
 	return GLVersion.major != 0 || GLVersion.minor != 0;
 }
 
+#pragma GCC diagnostic pop

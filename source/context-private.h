@@ -7,11 +7,38 @@
 #ifndef CONTEXT_PRIVATE_H
 #define CONTEXT_PRIVATE_H
 
+
+// <prefixed_api>
+
+#include "japan-list.h"
 #include "kansai-context.h"
+
 #include <string.h>
 
 #include "glad/glad.h" // Before SDL2
 #include <SDL2/SDL.h>
+
+struct kaContext
+{
+	size_t sdl_references;
+	struct jaList windows;
+};
+
+struct kaWindow
+{
+	// ---- Agnostic side ----
+	struct jaListItem* item;
+	void (*close_callback)(const struct kaWindow*);
+
+	// ---- SDL2 side ----
+	SDL_Window* sdl_window;
+	SDL_GLContext* gl_context;
+	bool cfg_vsync;
+};
+
+struct kaContext g_context; // A global! nooooo!
+
+// </prefixed_api>
 
 
 #define ATTRIBUTE_POSITION 10
@@ -20,17 +47,6 @@
 
 struct Context
 {
-	// ---- SDL2 side ----
-
-	SDL_Window* window;
-	SDL_GLContext* gl_context;
-
-	bool cfg_vsync;
-
-	struct ContextEvents events;
-
-	// ---- Agnostic side ----
-
 	bool cfg_wireframe;
 	enum Filter cfg_filter;
 
