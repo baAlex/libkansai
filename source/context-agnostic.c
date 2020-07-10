@@ -35,60 +35,64 @@ SOFTWARE.
 
  Context state
 -----------------------------*/
-inline void SetProgram(struct Context* context, const struct Program* program)
+inline void kaSetProgram(const struct kaProgram* program)
 {
-	if (program != context->current_program)
+	if (program != g_context.current_window->current_program)
 	{
-		context->current_program = program;
-		context->u_projection = glGetUniformLocation(program->glptr, "projection");
-		context->u_camera_projection = glGetUniformLocation(program->glptr, "camera_projection");
-		context->u_camera_origin = glGetUniformLocation(program->glptr, "camera_origin");
-		context->u_highlight = glGetUniformLocation(program->glptr, "highlight");
+		g_context.current_window->current_program = program;
+		g_context.current_window->uniform.world = glGetUniformLocation(program->glptr, "world");
+		g_context.current_window->uniform.camera = glGetUniformLocation(program->glptr, "camera");
+		g_context.current_window->uniform.camera_origin = glGetUniformLocation(program->glptr, "camera_origin");
 
-		context->u_texture[0] = glGetUniformLocation(program->glptr, "texture0");
-		context->u_texture[1] = glGetUniformLocation(program->glptr, "texture1");
-		context->u_texture[2] = glGetUniformLocation(program->glptr, "texture2");
-		context->u_texture[3] = glGetUniformLocation(program->glptr, "texture3");
-		context->u_texture[4] = glGetUniformLocation(program->glptr, "texture4");
-		context->u_texture[5] = glGetUniformLocation(program->glptr, "texture5");
-		context->u_texture[6] = glGetUniformLocation(program->glptr, "texture6");
-		context->u_texture[7] = glGetUniformLocation(program->glptr, "texture7");
+		g_context.current_window->uniform.texture[0] = glGetUniformLocation(program->glptr, "texture0");
+		g_context.current_window->uniform.texture[1] = glGetUniformLocation(program->glptr, "texture1");
+		g_context.current_window->uniform.texture[2] = glGetUniformLocation(program->glptr, "texture2");
+		g_context.current_window->uniform.texture[3] = glGetUniformLocation(program->glptr, "texture3");
+		g_context.current_window->uniform.texture[4] = glGetUniformLocation(program->glptr, "texture4");
+		g_context.current_window->uniform.texture[5] = glGetUniformLocation(program->glptr, "texture5");
+		g_context.current_window->uniform.texture[6] = glGetUniformLocation(program->glptr, "texture6");
+		g_context.current_window->uniform.texture[7] = glGetUniformLocation(program->glptr, "texture7");
 
 		glUseProgram(program->glptr);
 
-		glUniformMatrix4fv(context->u_projection, 1, GL_FALSE, &context->projection.e[0][0]);
-		glUniformMatrix4fv(context->u_camera_projection, 1, GL_FALSE, &context->camera.e[0][0]);
-		glUniform3fv(context->u_camera_origin, 1, (float*)&context->camera_origin);
-		glUniform1i(context->u_texture[0], 0);
-		glUniform1i(context->u_texture[1], 1);
-		glUniform1i(context->u_texture[2], 2);
-		glUniform1i(context->u_texture[3], 3);
-		glUniform1i(context->u_texture[4], 4);
-		glUniform1i(context->u_texture[5], 5);
-		glUniform1i(context->u_texture[6], 6);
-		glUniform1i(context->u_texture[7], 7);
+		glUniformMatrix4fv(g_context.current_window->uniform.world, 1, GL_FALSE,
+		                   &g_context.current_window->world.e[0][0]);
+		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
+		                   &g_context.current_window->camera.e[0][0]);
+		glUniform3fv(g_context.current_window->uniform.camera_origin, 1,
+		             (float*)&g_context.current_window->camera_origin);
+		glUniform1i(g_context.current_window->uniform.texture[0], 0);
+		glUniform1i(g_context.current_window->uniform.texture[1], 1);
+		glUniform1i(g_context.current_window->uniform.texture[2], 2);
+		glUniform1i(g_context.current_window->uniform.texture[3], 3);
+		glUniform1i(g_context.current_window->uniform.texture[4], 4);
+		glUniform1i(g_context.current_window->uniform.texture[5], 5);
+		glUniform1i(g_context.current_window->uniform.texture[6], 6);
+		glUniform1i(g_context.current_window->uniform.texture[7], 7);
 	}
 }
 
 
-inline void SetVertices(struct Context* context, const struct Vertices* vertices)
+inline void kaSetVertices(const struct kaVertices* vertices)
 {
-	if (vertices != context->current_vertices)
+	if (vertices != g_context.current_window->current_vertices)
 	{
-		context->current_vertices = vertices;
+		g_context.current_window->current_vertices = vertices;
 
 		glBindBuffer(GL_ARRAY_BUFFER, vertices->glptr);
-		glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(struct Vertex), NULL);
-		glVertexAttribPointer(ATTRIBUTE_UV, 2, GL_FLOAT, GL_FALSE, sizeof(struct Vertex), ((float*)NULL) + 3);
+		glVertexAttribPointer(ATTRIBUTE_COLOUR, 4, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
+		glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), ((float*)NULL) + 4);
+		glVertexAttribPointer(ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
+		glVertexAttribPointer(ATTRIBUTE_UV, 2, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
 	}
 }
 
 
-inline void SetTexture(struct Context* context, int unit, const struct Texture* texture)
+inline void kaSetContextTexture(int unit, const struct kaTexture* texture)
 {
-	if (texture != context->current_texture)
+	if (texture != g_context.current_window->current_texture)
 	{
-		context->current_texture = texture;
+		g_context.current_window->current_texture = texture;
 
 		glActiveTexture((GLenum)(GL_TEXTURE0 + unit));
 		glBindTexture(GL_TEXTURE_2D, texture->glptr);
@@ -96,58 +100,51 @@ inline void SetTexture(struct Context* context, int unit, const struct Texture* 
 }
 
 
-inline void SetProjection(struct Context* context, struct jaMatrix4 matrix)
+inline void kaSetWorld(struct jaMatrix4 matrix)
 {
-	memcpy(&context->projection, &matrix, sizeof(struct jaMatrix4));
+	memcpy(&g_context.current_window->world, &matrix, sizeof(struct jaMatrix4));
 
-	if (context->current_program != NULL)
-		glUniformMatrix4fv(context->u_projection, 1, GL_FALSE, &context->projection.e[0][0]);
+	if (g_context.current_window->current_program != NULL)
+		glUniformMatrix4fv(g_context.current_window->uniform.world, 1, GL_FALSE,
+		                   &g_context.current_window->world.e[0][0]);
 }
 
 
-inline void SetCameraLookAt(struct Context* context, struct jaVector3 target, struct jaVector3 origin)
+inline void kaSetCameraLookAt(struct jaVector3 target, struct jaVector3 origin)
 {
-	context->camera_origin = origin;
-	context->camera = jaMatrix4LookAt(origin, target, (struct jaVector3){0.0f, 0.0f, 1.0f});
+	g_context.current_window->camera_origin = origin;
+	g_context.current_window->camera = jaMatrix4LookAt(origin, target, (struct jaVector3){0.0f, 0.0f, 1.0f});
 
-	if (context->current_program != NULL)
+	if (g_context.current_window->current_program != NULL)
 	{
-		glUniformMatrix4fv(context->u_camera_projection, 1, GL_FALSE, &context->camera.e[0][0]);
-		glUniform3fv(context->u_camera_origin, 1, (float*)&context->camera_origin);
+		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
+		                   &g_context.current_window->camera.e[0][0]);
+		glUniform3fv(g_context.current_window->uniform.camera_origin, 1,
+		             (float*)&g_context.current_window->camera_origin);
 	}
 }
 
 
-inline void SetCameraMatrix(struct Context* context, struct jaMatrix4 matrix, struct jaVector3 origin)
+inline void kaSetCameraMatrix(struct jaMatrix4 matrix, struct jaVector3 origin)
 {
-	context->camera_origin = origin;
-	context->camera = matrix;
+	g_context.current_window->camera_origin = origin;
+	g_context.current_window->camera = matrix;
 
-	if (context->current_program != NULL)
+	if (g_context.current_window->current_program != NULL)
 	{
-		glUniformMatrix4fv(context->u_camera_projection, 1, GL_FALSE, &context->camera.e[0][0]);
-		glUniform3fv(context->u_camera_origin, 1, (float*)&context->camera_origin);
+		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
+		                   &g_context.current_window->camera.e[0][0]);
+		glUniform3fv(g_context.current_window->uniform.camera_origin, 1,
+		             (float*)&g_context.current_window->camera_origin);
 	}
 }
 
 
-inline void Draw(struct Context* context, const struct Index* index)
+inline void kaContextDraw(const struct kaIndex* index)
 {
-	(void)context;
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index->glptr);
-	glDrawElements((context->cfg_wireframe == false) ? GL_TRIANGLES : GL_LINES, (GLsizei)index->length,
+	glDrawElements((g_context.cfg_wireframe == false) ? GL_TRIANGLES : GL_LINES, (GLsizei)index->length,
 	               GL_UNSIGNED_SHORT, NULL);
-}
-
-
-inline void DrawAABB(struct Context* context, struct jaAABBox box, struct jaVector3 pos)
-{
-	const struct Vertices* old_vertices = context->current_vertices;
-	{
-		SetVertices(context, &context->aabb_vertices);
-		Draw(context, &context->aabb_index);
-	}
-	SetVertices(context, old_vertices);
 }
 
 
@@ -164,7 +161,7 @@ static inline int sCompileShader(GLuint shader, struct jaStatus* st)
 
 	if (success == GL_FALSE)
 	{
-		jaStatusSet(st, "ProgramInit", JA_STATUS_ERROR, NULL);
+		jaStatusSet(st, "kaProgramInit", JA_STATUS_ERROR, NULL);
 		glGetShaderInfoLog(shader, JA_STATUS_EXPL_LEN, NULL, st->explanation);
 		return 1;
 	}
@@ -173,18 +170,18 @@ static inline int sCompileShader(GLuint shader, struct jaStatus* st)
 }
 
 
-int ProgramInit(const char* vertex_code, const char* fragment_code, struct Program* out, struct jaStatus* st)
+int kaProgramInit(const char* vertex_code, const char* fragment_code, struct kaProgram* out, struct jaStatus* st)
 {
 	GLint success = GL_FALSE;
 	GLuint vertex = 0;
 	GLuint fragment = 0;
 
-	jaStatusSet(st, "ProgramInit", JA_STATUS_SUCCESS, NULL);
+	jaStatusSet(st, "kaProgramInit", JA_STATUS_SUCCESS, NULL);
 
 	// Compile shaders
 	if ((vertex = glCreateShader(GL_VERTEX_SHADER)) == 0 || (fragment = glCreateShader(GL_FRAGMENT_SHADER)) == 0)
 	{
-		jaStatusSet(st, "ProgramInit", JA_STATUS_ERROR, "Creating GL shader\n");
+		jaStatusSet(st, "kaProgramInit", JA_STATUS_ERROR, "Creating GL shader\n");
 		goto return_failure;
 	}
 
@@ -197,14 +194,16 @@ int ProgramInit(const char* vertex_code, const char* fragment_code, struct Progr
 	// Create program
 	if ((out->glptr = glCreateProgram()) == 0)
 	{
-		jaStatusSet(st, "ProgramInit", JA_STATUS_ERROR, "Creating GL program\n");
+		jaStatusSet(st, "kaProgramInit", JA_STATUS_ERROR, "Creating GL program\n");
 		goto return_failure;
 	}
 
 	glAttachShader(out->glptr, vertex);
 	glAttachShader(out->glptr, fragment);
 
-	glBindAttribLocation(out->glptr, ATTRIBUTE_POSITION, "vertex_position"); // Before link!
+	glBindAttribLocation(out->glptr, ATTRIBUTE_COLOUR, "vertex_colour"); // Before link!
+	glBindAttribLocation(out->glptr, ATTRIBUTE_POSITION, "vertex_position");
+	glBindAttribLocation(out->glptr, ATTRIBUTE_NORMAL, "vertex_normal");
 	glBindAttribLocation(out->glptr, ATTRIBUTE_UV, "vertex_uv");
 
 	// Link
@@ -213,7 +212,7 @@ int ProgramInit(const char* vertex_code, const char* fragment_code, struct Progr
 
 	if (success == GL_FALSE)
 	{
-		jaStatusSet(st, "ProgramInit", JA_STATUS_ERROR, NULL);
+		jaStatusSet(st, "kaProgramInit", JA_STATUS_ERROR, NULL);
 		glGetProgramInfoLog(out->glptr, JA_STATUS_EXPL_LEN, NULL, st->explanation);
 		goto return_failure;
 	}
@@ -235,7 +234,7 @@ return_failure:
 }
 
 
-inline void ProgramFree(struct Program* program)
+inline void kaProgramFree(struct kaProgram* program)
 {
 	if (program->glptr != 0)
 	{
@@ -245,30 +244,29 @@ inline void ProgramFree(struct Program* program)
 }
 
 
-int VerticesInit(const struct Vertex* data, uint16_t length, struct Vertices* out, struct jaStatus* st)
+int kaVerticesInit(const struct kaVertex* data, uint16_t length, struct kaVertices* out, struct jaStatus* st)
 {
 	GLint reported_size = 0;
 	GLint old_bind = 0;
 
-	jaStatusSet(st, "VerticesInit", JA_STATUS_SUCCESS, NULL);
+	jaStatusSet(st, "kaVerticesInit", JA_STATUS_SUCCESS, NULL);
 
 	glGenBuffers(1, &out->glptr);
-
 	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &old_bind);
 	glBindBuffer(GL_ARRAY_BUFFER, out->glptr); // Before ask if is!
 
 	if (glIsBuffer(out->glptr) == GL_FALSE)
 	{
-		jaStatusSet(st, "VerticesInit", JA_STATUS_ERROR, "Creating GL buffer");
+		jaStatusSet(st, "kaVerticesInit", JA_STATUS_ERROR, "Creating GL buffer");
 		goto return_failure;
 	}
 
-	glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(struct Vertex) * length), data, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(sizeof(struct kaVertex) * length), data, GL_STREAM_DRAW);
 	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &reported_size);
 
-	if ((size_t)reported_size != (sizeof(struct Vertex) * length))
+	if ((size_t)reported_size != (sizeof(struct kaVertex) * length))
 	{
-		jaStatusSet(st, "VerticesInit", JA_STATUS_ERROR, "Attaching data");
+		jaStatusSet(st, "kaVerticesInit", JA_STATUS_ERROR, "Attaching data");
 		goto return_failure;
 	}
 
@@ -288,7 +286,7 @@ return_failure:
 }
 
 
-inline void VerticesFree(struct Vertices* vertices)
+inline void kaVerticesFree(struct kaVertices* vertices)
 {
 	if (vertices->glptr != 0)
 	{
@@ -298,21 +296,20 @@ inline void VerticesFree(struct Vertices* vertices)
 }
 
 
-int IndexInit(const uint16_t* data, size_t length, struct Index* out, struct jaStatus* st)
+int kaIndexInit(const uint16_t* data, size_t length, struct kaIndex* out, struct jaStatus* st)
 {
 	GLint reported_size = 0;
 	GLint old_bind = 0;
 
-	jaStatusSet(st, "IndexInit", JA_STATUS_SUCCESS, NULL);
+	jaStatusSet(st, "kaIndexInit", JA_STATUS_SUCCESS, NULL);
 
 	glGenBuffers(1, &out->glptr);
-
 	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &old_bind);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, out->glptr); // Before ask if is!
 
 	if (glIsBuffer(out->glptr) == GL_FALSE)
 	{
-		jaStatusSet(st, "IndexInit", JA_STATUS_ERROR, "Creating GL buffer");
+		jaStatusSet(st, "kaIndexInit", JA_STATUS_ERROR, "Creating GL buffer");
 		goto return_failure;
 	}
 
@@ -321,7 +318,7 @@ int IndexInit(const uint16_t* data, size_t length, struct Index* out, struct jaS
 
 	if ((size_t)reported_size != (sizeof(uint16_t) * length))
 	{
-		jaStatusSet(st, "IndexInit", JA_STATUS_ERROR, "Attaching data");
+		jaStatusSet(st, "kaIndexInit", JA_STATUS_ERROR, "Attaching data");
 		goto return_failure;
 	}
 
@@ -341,7 +338,7 @@ return_failure:
 }
 
 
-inline void IndexFree(struct Index* index)
+inline void kaIndexFree(struct kaIndex* index)
 {
 	if (index->glptr != 0)
 	{
@@ -351,31 +348,29 @@ inline void IndexFree(struct Index* index)
 }
 
 
-int TextureInitImage(const struct Context* context, const struct jaImage* image, struct Texture* out,
-                     struct jaStatus* st)
+int kaTextureInitImage(const struct jaImage* image, struct kaTexture* out, struct jaStatus* st)
 {
 	GLint old_bind = 0;
 
-	jaStatusSet(st, "TextureInitImage", JA_STATUS_SUCCESS, NULL);
+	jaStatusSet(st, "kaTextureInitImage", JA_STATUS_SUCCESS, NULL);
 
 	if (image->format != JA_IMAGE_U8)
 	{
-		jaStatusSet(st, "TextureInitImage", JA_STATUS_ERROR, "Only 8 bits per component images supported");
+		jaStatusSet(st, "kaTextureInitImage", JA_STATUS_ERROR, "Only 8 bits per component images supported");
 		return 1;
 	}
 
 	glGenTextures(1, &out->glptr);
-
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_bind);
 	glBindTexture(GL_TEXTURE_2D, out->glptr); // Before ask if is!
 
 	if (glIsTexture(out->glptr) == GL_FALSE)
 	{
-		jaStatusSet(st, "TextureInitImage", JA_STATUS_ERROR, "Creating GL texture");
+		jaStatusSet(st, "kaTextureInitImage", JA_STATUS_ERROR, "Creating GL texture");
 		return 1;
 	}
 
-	switch (context->cfg_filter)
+	switch (g_context.cfg_filter)
 	{
 	case FILTER_BILINEAR:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
@@ -422,22 +417,23 @@ int TextureInitImage(const struct Context* context, const struct jaImage* image,
 	default: break;
 	}
 
-	glGenerateMipmap(GL_TEXTURE_2D);
+	if (g_context.cfg_filter != FILTER_NONE)
+		glGenerateMipmap(GL_TEXTURE_2D);
+
 	glBindTexture(GL_TEXTURE_2D, (GLuint)old_bind);
 	return 0;
 }
 
 
-int TextureInitFilename(const struct Context* context, const char* image_filename, struct Texture* out,
-                        struct jaStatus* st)
+int kaTextureInitFilename(const char* image_filename, struct kaTexture* out, struct jaStatus* st)
 {
 	struct jaImage* image = NULL;
-	jaStatusSet(st, "TextureInitFilename", JA_STATUS_SUCCESS, NULL);
+	jaStatusSet(st, "kaTextureInitFilename", JA_STATUS_SUCCESS, NULL);
 
 	if ((image = jaImageLoad(image_filename, st)) == NULL)
 		return 1;
 
-	if (TextureInitImage(context, image, out, st) != 0)
+	if (kaTextureInitImage(image, out, st) != 0)
 	{
 		jaImageDelete(image);
 		return 1;
@@ -448,7 +444,7 @@ int TextureInitFilename(const struct Context* context, const char* image_filenam
 }
 
 
-inline void TextureFree(struct Texture* texture)
+inline void kaTextureFree(struct kaTexture* texture)
 {
 	if (texture->glptr != 0)
 	{

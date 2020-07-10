@@ -17,13 +17,16 @@
 	#define KA_EXPORT // Whitespace
 #endif
 
-
-// <prefixed_api>
-
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "japan-configuration.h"
+#include "japan-image.h"
+#include "japan-matrix.h"
 #include "japan-status.h"
+#include "japan-vector.h"
+
+struct kaWindow;
 
 struct kaEvents
 {
@@ -37,111 +40,71 @@ struct kaEvents
 	struct { float h, v, t; } right_analog; // TODO
 };
 
-KA_EXPORT int kaContextStart(struct jaStatus* st);
-KA_EXPORT void kaContextStop();
-
-KA_EXPORT int kaContextUpdate(struct kaEvents* out_events);
-KA_EXPORT void kaSleep(int milliseconds);
-
-KA_EXPORT struct kaWindow* kaWindowCreate(const struct jaConfiguration*, const char* caption,
-                                          void (*close_callback)(const struct kaWindow*), struct jaStatus* st);
-KA_EXPORT void kaWindowDelete(struct kaWindow* window);
-
-// </prefixed_api>
-
-
-#include <stddef.h>
-
-#include "japan-aabounding.h"
-#include "japan-image.h"
-#include "japan-matrix.h"
-#include "japan-vector.h"
-
-enum Filter
-{
-	FILTER_BILINEAR,
-	FILTER_TRILINEAR,
-	FILTER_PIXEL_BILINEAR,
-	FILTER_PIXEL_TRILINEAR,
-	FILTER_NONE
-};
-
-struct Program
+struct kaProgram
 {
 	unsigned int glptr;
 };
 
-struct Vertex
+struct kaVertex
 {
-	struct jaVector3 pos;
+	struct jaVector4 colour;
+	struct jaVector3 position;
+	struct jaVector3 normal;
 	struct jaVector2 uv;
 };
 
-struct Vertices
+struct kaVertices
 {
 	unsigned int glptr;
 	uint16_t length; // In elements
 };
 
-struct Index
+struct kaIndex
 {
 	unsigned int glptr;
 	size_t length; // In elements
 };
 
-struct Texture
+struct kaTexture
 {
 	unsigned int glptr;
 };
 
-#if 0
-// Context state
 
-KA_EXPORT void SetProgram(struct Context* context, const struct Program* program);
-KA_EXPORT void SetVertices(struct Context* context, const struct Vertices* vertices);
-KA_EXPORT void SetTexture(struct Context* context, int unit, const struct Texture* texture);
-KA_EXPORT void SetProjection(struct Context* context, struct jaMatrix4 matrix);
-KA_EXPORT void SetCameraLookAt(struct Context* context, struct jaVector3 target, struct jaVector3 origin);
-KA_EXPORT void SetCameraMatrix(struct Context* context, struct jaMatrix4 matrix, struct jaVector3 origin);
+KA_EXPORT int kaContextStart(const struct jaConfiguration*, struct jaStatus* st);
+KA_EXPORT void kaContextStop();
+KA_EXPORT int kaContextUpdate(struct jaStatus* st);
 
-KA_EXPORT void Draw(struct Context* context, const struct Index* index);
-KA_EXPORT void DrawAABB(struct Context* context, struct jaAABBox box, struct jaVector3 pos);
+KA_EXPORT int kaWindowCreate(const char* caption, void (*close_callback)(struct kaWindow*, void*),
+                             void (*init_callback)(struct kaWindow*, void*),
+                             void (*frame_callback)(struct kaWindow*, const struct kaEvents*, void*), void* user_data,
+                             struct jaStatus* st);
+KA_EXPORT void kaWindowDelete(struct kaWindow* window);
 
+//
 
-// OpenGL abstractions
+KA_EXPORT int kaProgramInit(const char* vertex_code, const char* fragment_code, struct kaProgram* out,
+                            struct jaStatus* st);
+KA_EXPORT void kaProgramFree(struct kaProgram* program);
 
-KA_EXPORT int ProgramInit(const char* vertex_code, const char* fragment_code, struct Program* out, struct jaStatus* st);
-KA_EXPORT void ProgramFree(struct Program* program);
+KA_EXPORT int kaVerticesInit(const struct kaVertex* data, uint16_t length, struct kaVertices* out, struct jaStatus* st);
+KA_EXPORT void kaVerticesFree(struct kaVertices* vertices);
 
-KA_EXPORT int VerticesInit(const struct Vertex* data, uint16_t length, struct Vertices* out, struct jaStatus* st);
-KA_EXPORT void VerticesFree(struct Vertices* vertices);
+KA_EXPORT int kaIndexInit(const uint16_t* data, size_t length, struct kaIndex* out, struct jaStatus* st);
+KA_EXPORT void kaIndexFree(struct kaIndex* index);
 
-KA_EXPORT int IndexInit(const uint16_t* data, size_t length, struct Index* out, struct jaStatus* st);
-KA_EXPORT void IndexFree(struct Index* index);
+KA_EXPORT int kaTextureInitImage(const struct jaImage* image, struct kaTexture* out, struct jaStatus* st);
+KA_EXPORT int kaTextureInitFilename(const char* image_filename, struct kaTexture* out, struct jaStatus* st);
+KA_EXPORT void kaTextureFree(struct kaTexture* texture);
 
-KA_EXPORT int TextureInitImage(const struct Context*, const struct jaImage* image, struct Texture* out, struct jaStatus* st);
-KA_EXPORT int TextureInitFilename(const struct Context*, const char* image_filename, struct Texture* out, struct jaStatus* st);
-KA_EXPORT void TextureFree(struct Texture* texture);
+KA_EXPORT void kaSetProgram(const struct kaProgram* program);
+KA_EXPORT void kaSetVertices(const struct kaVertices* vertices);
+KA_EXPORT void SetTexture(int unit, const struct kaTexture* texture);
 
-#if __STDC_VERSION__ >= 201112L
+KA_EXPORT void kaSetWorld(struct jaMatrix4 matrix);
+KA_EXPORT void kaSetCameraLookAt(struct jaVector3 target, struct jaVector3 origin);
+KA_EXPORT void kaSetCameraMatrix(struct jaMatrix4 matrix, struct jaVector3 origin);
 
-#define SetCamera(context, val, origin) \
-	_Generic((val), \
-		struct jaVector3: SetCameraLookAt, \
-		struct jaMatrix4: SetCameraMatrix, \
-		default: SetCameraLookAt \
-	)(context, val, origin)
+KA_EXPORT void kaContextDraw(const struct kaIndex* index);
 
-#define TextureInit(context, src, out, st) \
-	_Generic((src), \
-		const char*: TextureInitFilename, \
-		char*: TextureInitFilename, \
-		const struct jaImage*: TextureInitImage, \
-		struct jaImage*: TextureInitImage, \
-		default: TextureInitImage \
-	)(context, src, out, st)
-
-#endif
-
-#endif
 #endif

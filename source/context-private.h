@@ -7,9 +7,6 @@
 #ifndef CONTEXT_PRIVATE_H
 #define CONTEXT_PRIVATE_H
 
-
-// <prefixed_api>
-
 #include "japan-list.h"
 #include "kansai-context.h"
 
@@ -18,55 +15,64 @@
 #include "glad/glad.h" // Before SDL2
 #include <SDL2/SDL.h>
 
-struct kaContext
+#define ATTRIBUTE_POSITION 10
+#define ATTRIBUTE_NORMAL 11
+#define ATTRIBUTE_COLOUR 12
+#define ATTRIBUTE_UV 13
+
+enum Filter
 {
-	size_t sdl_references;
-	struct jaList windows;
+	FILTER_BILINEAR,
+	FILTER_TRILINEAR,
+	FILTER_PIXEL_BILINEAR,
+	FILTER_PIXEL_TRILINEAR,
+	FILTER_NONE
 };
 
 struct kaWindow
 {
 	// ---- Agnostic side ----
-	struct jaListItem* item;
-	void (*close_callback)(const struct kaWindow*);
+	void (*close_callback)(struct kaWindow*, void*);
+	void (*init_callback)(struct kaWindow*, void*);
+	void (*frame_callback)(struct kaWindow*, const struct kaEvents*, void*);
+	void* user_data;
+	bool delete_mark;
+
+	struct jaMatrix4 world;
+	struct jaMatrix4 camera;
+	struct jaVector3 camera_origin;
+
+	const struct kaProgram* current_program;
+	const struct kaVertices* current_vertices;
+	const struct kaTexture* current_texture;
+
+	struct
+	{
+		GLint world;
+		GLint camera;
+		GLint camera_origin;
+		GLint texture[8];
+	} uniform; // For current program
 
 	// ---- SDL2 side ----
 	SDL_Window* sdl_window;
 	SDL_GLContext* gl_context;
-	bool cfg_vsync;
 };
 
-struct kaContext g_context; // A global! nooooo!
-
-// </prefixed_api>
-
-
-#define ATTRIBUTE_POSITION 10
-#define ATTRIBUTE_UV 11
-
-
-struct Context
+struct kaContext
 {
-	bool cfg_wireframe;
+	// ---- Agnostic side ----
 	enum Filter cfg_filter;
+	bool cfg_vsync;
+	bool cfg_wireframe;
 
-	// Context State
-	struct jaMatrix4 projection;
-	struct jaMatrix4 camera;
-	struct jaVector3 camera_origin;
+	// ---- SDL2 side ----
+	size_t sdl_references;
+	struct jaList windows;
+	struct kaEvents events;
 
-	const struct Program* current_program;
-	const struct Vertices* current_vertices;
-	const struct Texture* current_texture;
+	struct kaWindow* current_window;
 
-	GLint u_projection;        // For current program
-	GLint u_camera_projection; // "
-	GLint u_camera_origin;     // "
-	GLint u_texture[8];        // "
-	GLint u_highlight;         // "
-
-	struct Vertices aabb_vertices;
-	struct Index aabb_index;
-};
+} g_context; // Globals! nooooo!
 
 #endif
