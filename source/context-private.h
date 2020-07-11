@@ -32,15 +32,18 @@ enum Filter
 struct kaWindow
 {
 	// ---- Agnostic side ----
-	void (*close_callback)(struct kaWindow*, void*);
 	void (*init_callback)(struct kaWindow*, void*);
 	void (*frame_callback)(struct kaWindow*, const struct kaEvents*, void*);
+	void (*resize_callback)(struct kaWindow*, int, int, void*);
+	void (*function_callback)(struct kaWindow*, int, void*);
+	void (*close_callback)(struct kaWindow*, void*);
 	void* user_data;
 	bool delete_mark;
+	bool resized_mark;
 
 	struct jaMatrix4 world;
 	struct jaMatrix4 camera;
-	struct jaVector3 camera_origin;
+	struct jaVector3 camera_position;
 
 	const struct kaProgram* current_program;
 	const struct kaVertices* current_vertices;
@@ -48,11 +51,18 @@ struct kaWindow
 
 	struct
 	{
+		GLint local_position;
+		GLint local_scale;
+
 		GLint world;
 		GLint camera;
-		GLint camera_origin;
+		GLint camera_position;
 		GLint texture[8];
 	} uniform; // For current program
+
+	struct kaVertices generic_vertices;
+	struct kaIndex generic_index;
+	struct kaProgram generic_program;
 
 	// ---- SDL2 side ----
 	SDL_Window* sdl_window;

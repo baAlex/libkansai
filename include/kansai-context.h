@@ -75,11 +75,14 @@ KA_EXPORT int kaContextStart(const struct jaConfiguration*, struct jaStatus* st)
 KA_EXPORT void kaContextStop();
 KA_EXPORT int kaContextUpdate(struct jaStatus* st);
 
-KA_EXPORT int kaWindowCreate(const char* caption, void (*close_callback)(struct kaWindow*, void*),
-                             void (*init_callback)(struct kaWindow*, void*),
-                             void (*frame_callback)(struct kaWindow*, const struct kaEvents*, void*), void* user_data,
-                             struct jaStatus* st);
+KA_EXPORT int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*),
+                             void (*frame_callback)(struct kaWindow*, const struct kaEvents*, void*),
+                             void (*resize_callback)(struct kaWindow*, int, int, void*),
+                             void (*function_callback)(struct kaWindow*, int, void*),
+                             void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st);
 KA_EXPORT void kaWindowDelete(struct kaWindow* window);
+
+KA_EXPORT int kaTakeScreenshot(const struct kaWindow* window, const char* filename, struct jaStatus* st);
 
 //
 
@@ -105,6 +108,7 @@ KA_EXPORT void kaSetWorld(struct jaMatrix4 matrix);
 KA_EXPORT void kaSetCameraLookAt(struct jaVector3 target, struct jaVector3 origin);
 KA_EXPORT void kaSetCameraMatrix(struct jaMatrix4 matrix, struct jaVector3 origin);
 
-KA_EXPORT void kaContextDraw(const struct kaIndex* index);
+KA_EXPORT void kaDraw(const struct kaIndex* index);
+KA_EXPORT void kaDrawSprite(struct jaVector3 position, struct jaVector3 scale);
 
 #endif

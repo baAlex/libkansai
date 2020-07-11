@@ -37,12 +37,18 @@ SOFTWARE.
 -----------------------------*/
 inline void kaSetProgram(const struct kaProgram* program)
 {
-	if (program != g_context.current_window->current_program)
+	if (program != NULL && program != g_context.current_window->current_program)
 	{
 		g_context.current_window->current_program = program;
+
+		g_context.current_window->uniform.local_position = glGetUniformLocation(program->glptr, "local_position");
+		g_context.current_window->uniform.local_scale = glGetUniformLocation(program->glptr, "local_scale");
+
+		//
+
 		g_context.current_window->uniform.world = glGetUniformLocation(program->glptr, "world");
 		g_context.current_window->uniform.camera = glGetUniformLocation(program->glptr, "camera");
-		g_context.current_window->uniform.camera_origin = glGetUniformLocation(program->glptr, "camera_origin");
+		g_context.current_window->uniform.camera_position = glGetUniformLocation(program->glptr, "camera_position");
 
 		g_context.current_window->uniform.texture[0] = glGetUniformLocation(program->glptr, "texture0");
 		g_context.current_window->uniform.texture[1] = glGetUniformLocation(program->glptr, "texture1");
@@ -59,8 +65,8 @@ inline void kaSetProgram(const struct kaProgram* program)
 		                   &g_context.current_window->world.e[0][0]);
 		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
 		                   &g_context.current_window->camera.e[0][0]);
-		glUniform3fv(g_context.current_window->uniform.camera_origin, 1,
-		             (float*)&g_context.current_window->camera_origin);
+		glUniform3fv(g_context.current_window->uniform.camera_position, 1,
+		             (float*)&g_context.current_window->camera_position);
 		glUniform1i(g_context.current_window->uniform.texture[0], 0);
 		glUniform1i(g_context.current_window->uniform.texture[1], 1);
 		glUniform1i(g_context.current_window->uniform.texture[2], 2);
@@ -75,7 +81,7 @@ inline void kaSetProgram(const struct kaProgram* program)
 
 inline void kaSetVertices(const struct kaVertices* vertices)
 {
-	if (vertices != g_context.current_window->current_vertices)
+	if (vertices != NULL && vertices != g_context.current_window->current_vertices)
 	{
 		g_context.current_window->current_vertices = vertices;
 
@@ -90,7 +96,7 @@ inline void kaSetVertices(const struct kaVertices* vertices)
 
 inline void kaSetContextTexture(int unit, const struct kaTexture* texture)
 {
-	if (texture != g_context.current_window->current_texture)
+	if (texture != NULL && texture != g_context.current_window->current_texture)
 	{
 		g_context.current_window->current_texture = texture;
 
@@ -112,39 +118,61 @@ inline void kaSetWorld(struct jaMatrix4 matrix)
 
 inline void kaSetCameraLookAt(struct jaVector3 target, struct jaVector3 origin)
 {
-	g_context.current_window->camera_origin = origin;
+	g_context.current_window->camera_position = origin;
 	g_context.current_window->camera = jaMatrix4LookAt(origin, target, (struct jaVector3){0.0f, 0.0f, 1.0f});
 
 	if (g_context.current_window->current_program != NULL)
 	{
 		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
 		                   &g_context.current_window->camera.e[0][0]);
-		glUniform3fv(g_context.current_window->uniform.camera_origin, 1,
-		             (float*)&g_context.current_window->camera_origin);
+		glUniform3fv(g_context.current_window->uniform.camera_position, 1,
+		             (float*)&g_context.current_window->camera_position);
 	}
 }
 
 
 inline void kaSetCameraMatrix(struct jaMatrix4 matrix, struct jaVector3 origin)
 {
-	g_context.current_window->camera_origin = origin;
+	g_context.current_window->camera_position = origin;
 	g_context.current_window->camera = matrix;
 
 	if (g_context.current_window->current_program != NULL)
 	{
 		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
 		                   &g_context.current_window->camera.e[0][0]);
-		glUniform3fv(g_context.current_window->uniform.camera_origin, 1,
-		             (float*)&g_context.current_window->camera_origin);
+		glUniform3fv(g_context.current_window->uniform.camera_position, 1,
+		             (float*)&g_context.current_window->camera_position);
 	}
 }
 
 
-inline void kaContextDraw(const struct kaIndex* index)
+inline void kaDraw(const struct kaIndex* index)
 {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index->glptr);
 	glDrawElements((g_context.cfg_wireframe == false) ? GL_TRIANGLES : GL_LINES, (GLsizei)index->length,
 	               GL_UNSIGNED_SHORT, NULL);
+}
+
+
+inline void kaDrawSprite(struct jaVector3 position, struct jaVector3 scale)
+{
+	// Incredible inefficient!
+	const struct kaProgram* prev_program = g_context.current_window->current_program;
+	const struct kaVertices* prev_vertices = g_context.current_window->current_vertices;
+
+	kaSetProgram(&g_context.current_window->generic_program);
+	kaSetVertices(&g_context.current_window->generic_vertices);
+
+	glUniform3fv(g_context.current_window->uniform.local_position, 1, (float*)&position);
+	glUniform3fv(g_context.current_window->uniform.local_scale, 1, (float*)&scale);
+
+	kaDraw(&g_context.current_window->generic_index);
+
+	if (prev_program != &g_context.current_window->generic_program)
+		kaSetProgram(prev_program);
+
+	if (prev_vertices != &g_context.current_window->generic_vertices)
+		kaSetVertices(prev_vertices);
 }
 
 
