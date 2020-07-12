@@ -28,8 +28,11 @@ if (KA_EXPORT_SYMBOLS)
 endif ()
 
 set(SOURCES
+	"./source/aabounding.c"
 	"./source/context-agnostic.c"
 	"./source/context-sdl2.c"
+	"./source/random.c"
+	"./source/utilities.c"
 	"./source/version.c"
 	"./source/glad/glad.c"
 )
