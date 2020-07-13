@@ -346,8 +346,8 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		    "#version 100\n"
 		    "attribute vec3 vertex_position; attribute vec3 vertex_normal;"
 		    "attribute vec4 vertex_colour; attribute vec2 vertex_uv;"
-		    "uniform mat4 world; uniform mat4 camera; uniform vec3 camera_position; uniform vec3 "
-		    "local_position; uniform vec3 local_scale;"
+		    "uniform mat4 world; uniform mat4 camera; uniform vec3 camera_position;"
+		    "uniform vec3 local_position; uniform vec3 local_scale;"
 		    "varying vec4 colour;"
 
 		    "void main() { colour = vertex_colour;"
@@ -361,6 +361,9 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		kaIndexInit(raw_index, 6, &window->generic_index, NULL);
 		kaVerticesInit(raw_vertices, 4, &window->generic_vertices, NULL);
 		kaProgramInit(vertex_code, fragment_code, &window->generic_program, NULL);
+
+		kaSetProgram(&window->generic_program);
+		kaSetVertices(&window->generic_vertices);
 	}
 
 	// First callback

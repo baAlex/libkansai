@@ -157,19 +157,12 @@ inline void kaDraw(const struct kaIndex* index)
 inline void kaDrawSprite(struct jaVector3 position, struct jaVector3 scale)
 {
 	// Incredible inefficient!
-	const struct kaProgram* prev_program = g_context.current_window->current_program;
 	const struct kaVertices* prev_vertices = g_context.current_window->current_vertices;
-
-	kaSetProgram(&g_context.current_window->generic_program);
 	kaSetVertices(&g_context.current_window->generic_vertices);
 
 	glUniform3fv(g_context.current_window->uniform.local_position, 1, (float*)&position);
 	glUniform3fv(g_context.current_window->uniform.local_scale, 1, (float*)&scale);
-
 	kaDraw(&g_context.current_window->generic_index);
-
-	if (prev_program != &g_context.current_window->generic_program)
-		kaSetProgram(prev_program);
 
 	if (prev_vertices != &g_context.current_window->generic_vertices)
 		kaSetVertices(prev_vertices);

@@ -4,6 +4,7 @@ project("LibKansai" C)
 option(KA_EXPORT_SYMBOLS "Export symbols" ON)
 option(KA_BUILD_SHARED   "Build shared library" ON)
 option(KA_BUILD_STATIC   "Build static library" ON)
+option(KA_BUILD_SKETCHES "Build sketches" ON)
 
 include_directories("./include/")
 
@@ -95,4 +96,15 @@ else()
 		target_link_libraries("kansai-static" ${SDL2_LIBRARIES})
 	endif ()
 
+endif()
+
+# Sketches
+if (KA_BUILD_SKETCHES)
+	include_directories("./source/libjapan/include")
+
+	add_executable("square" "./sketches/square.c")
+	target_link_libraries("square" "kansai-static")
+
+	add_executable("multiple-windows" "./sketches/multiple-windows.c")
+	target_link_libraries("multiple-windows" "kansai-static")
 endif()
