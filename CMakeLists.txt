@@ -19,13 +19,11 @@ elseif (CMAKE_C_COMPILER_ID MATCHES "MSVC")
 endif()
 
 if (KA_EXPORT_SYMBOLS)
-
 	if ((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_C_COMPILER_ID MATCHES "GNU"))
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DKA_EXPORT_SYMBOLS")
 	elseif (CMAKE_C_COMPILER_ID MATCHES "MSVC")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /DKA_EXPORT_SYMBOLS")
 	endif()
-
 endif ()
 
 set(SOURCES
@@ -50,7 +48,6 @@ endif ()
 option(JA_BUILD_TEST OFF)
 
 if (KA_BUILD_SHARED)
-
 	if(NOT TARGET "japan")
 		# https://stackoverflow.com/a/42985142
 		add_subdirectory("./source/libjapan/")
@@ -58,11 +55,9 @@ if (KA_BUILD_SHARED)
 
 	target_link_libraries("kansai" "japan")
 	target_include_directories("kansai" PRIVATE "./source/libjapan/include")
-
 endif ()
 
 if (KA_BUILD_STATIC)
-
 	if(NOT TARGET "japan-static")
 		# https://stackoverflow.com/a/42985142
 		add_subdirectory("./source/libjapan/")
@@ -70,14 +65,12 @@ if (KA_BUILD_STATIC)
 
 	target_link_libraries("kansai-static" "japan-static")
 	target_include_directories("kansai-static" PRIVATE "./source/libjapan/include")
-
 endif ()
 
 # SDL2
 find_package(SDL2)
 
 if (DEFINED VCPKG_TOOLCHAIN)
-
 	if (KA_BUILD_SHARED)
 		target_link_libraries("kansai" SDL2::SDL2 SDL2::SDL2main)
 	endif ()
@@ -85,9 +78,7 @@ if (DEFINED VCPKG_TOOLCHAIN)
 	if (KA_BUILD_STATIC)
 		target_link_libraries("kansai-static" SDL2::SDL2 SDL2::SDL2main)
 	endif ()
-
 else()
-
 	if (KA_BUILD_SHARED)
 		target_link_libraries("kansai" ${SDL2_LIBRARIES})
 	endif ()
@@ -95,7 +86,6 @@ else()
 	if (KA_BUILD_STATIC)
 		target_link_libraries("kansai-static" ${SDL2_LIBRARIES})
 	endif ()
-
 endif()
 
 # Sketches

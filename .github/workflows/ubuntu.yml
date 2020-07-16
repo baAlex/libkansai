@@ -23,9 +23,25 @@ jobs:
         cmake -DCMAKE_BUILD_TYPE=Release ..
         cmake --build . --config Release
 
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: Ubuntu release
+        path: |
+          build-release/square
+          build-release/multiple-windows
+
     - name: Compile debug build
       run: |
         mkdir build-debug
         cd build-debug
         cmake -DCMAKE_BUILD_TYPE=Debug ..
         cmake --build . --config Debug
+
+    - name: Upload debug artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: Ubuntu debug
+        path: |
+          build-debug/square
+          build-debug/multiple-windows
