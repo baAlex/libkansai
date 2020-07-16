@@ -16,9 +16,8 @@
 #include <SDL2/SDL.h>
 
 #define ATTRIBUTE_POSITION 10
-#define ATTRIBUTE_NORMAL 11
-#define ATTRIBUTE_COLOUR 12
-#define ATTRIBUTE_UV 13
+#define ATTRIBUTE_COLOUR 11
+#define ATTRIBUTE_UV 12
 
 enum Filter
 {
@@ -33,7 +32,7 @@ struct kaWindow
 {
 	// ---- Agnostic side ----
 	void (*init_callback)(struct kaWindow*, void*);
-	void (*frame_callback)(struct kaWindow*, const struct kaEvents*, void*);
+	void (*frame_callback)(struct kaWindow*, struct kaEvents, void*);
 	void (*resize_callback)(struct kaWindow*, int, int, void*);
 	void (*function_callback)(struct kaWindow*, int, void*);
 	void (*close_callback)(struct kaWindow*, void*);
@@ -60,9 +59,10 @@ struct kaWindow
 		GLint texture[8];
 	} uniform; // For current program
 
-	struct kaVertices generic_vertices;
-	struct kaIndex generic_index;
-	struct kaProgram generic_program;
+	struct kaVertices default_vertices;
+	struct kaIndex default_index;
+	struct kaProgram default_program;
+	struct kaTexture default_texture;
 
 	// ---- SDL2 side ----
 	SDL_Window* sdl_window;
@@ -82,6 +82,7 @@ struct kaContext
 	struct kaEvents events;
 
 	struct kaWindow* current_window;
+	struct kaWindow* focused_window;
 
 } g_context; // Globals! nooooo!
 

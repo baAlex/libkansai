@@ -16,7 +16,7 @@ static void sInit(struct kaWindow* window, void* user_data)
 }
 
 
-static void sFrame(struct kaWindow* window, const struct kaEvents* e, void* user_data)
+static void sFrame(struct kaWindow* window, struct kaEvents e, void* user_data)
 {
 	(void)window;
 	(void)e;

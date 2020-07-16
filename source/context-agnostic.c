@@ -86,15 +86,14 @@ inline void kaSetVertices(const struct kaVertices* vertices)
 		g_context.current_window->current_vertices = vertices;
 
 		glBindBuffer(GL_ARRAY_BUFFER, vertices->glptr);
-		glVertexAttribPointer(ATTRIBUTE_COLOUR, 4, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
-		glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), ((float*)NULL) + 4);
-		glVertexAttribPointer(ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
-		glVertexAttribPointer(ATTRIBUTE_UV, 2, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
+		glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
+		glVertexAttribPointer(ATTRIBUTE_COLOUR, 4, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), ((float*)NULL) + 3);
+		glVertexAttribPointer(ATTRIBUTE_UV, 2, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), ((float*)NULL) + 7);
 	}
 }
 
 
-inline void kaSetContextTexture(int unit, const struct kaTexture* texture)
+inline void kaSetTexture(int unit, const struct kaTexture* texture)
 {
 	if (texture != NULL && texture != g_context.current_window->current_texture)
 	{
@@ -158,13 +157,13 @@ inline void kaDrawSprite(struct jaVector3 position, struct jaVector3 scale)
 {
 	// Incredible inefficient!
 	const struct kaVertices* prev_vertices = g_context.current_window->current_vertices;
-	kaSetVertices(&g_context.current_window->generic_vertices);
+	kaSetVertices(&g_context.current_window->default_vertices);
 
 	glUniform3fv(g_context.current_window->uniform.local_position, 1, (float*)&position);
 	glUniform3fv(g_context.current_window->uniform.local_scale, 1, (float*)&scale);
-	kaDraw(&g_context.current_window->generic_index);
+	kaDraw(&g_context.current_window->default_index);
 
-	if (prev_vertices != &g_context.current_window->generic_vertices)
+	if (prev_vertices != &g_context.current_window->default_vertices)
 		kaSetVertices(prev_vertices);
 }
 
@@ -222,9 +221,8 @@ int kaProgramInit(const char* vertex_code, const char* fragment_code, struct kaP
 	glAttachShader(out->glptr, vertex);
 	glAttachShader(out->glptr, fragment);
 
-	glBindAttribLocation(out->glptr, ATTRIBUTE_COLOUR, "vertex_colour"); // Before link!
-	glBindAttribLocation(out->glptr, ATTRIBUTE_POSITION, "vertex_position");
-	glBindAttribLocation(out->glptr, ATTRIBUTE_NORMAL, "vertex_normal");
+	glBindAttribLocation(out->glptr, ATTRIBUTE_POSITION, "vertex_position"); // Before link!
+	glBindAttribLocation(out->glptr, ATTRIBUTE_COLOUR, "vertex_colour");
 	glBindAttribLocation(out->glptr, ATTRIBUTE_UV, "vertex_uv");
 
 	// Link

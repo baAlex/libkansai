@@ -14,6 +14,8 @@ struct WindowData
 {
 	int id;
 	int screenshot_counter;
+
+	bool x_press;
 };
 
 
@@ -26,7 +28,7 @@ static void sInit(struct kaWindow* window, void* user_data)
 }
 
 
-static void sFrame(struct kaWindow* window, const struct kaEvents* e, void* user_data)
+static void sFrame(struct kaWindow* window, struct kaEvents e, void* user_data)
 {
 	(void)window;
 	(void)e;
@@ -36,6 +38,12 @@ static void sFrame(struct kaWindow* window, const struct kaEvents* e, void* user
 
 	if (data->id == 0)
 		kaDrawSprite((struct jaVector3){160.0f, 120.0f, 0.5f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
+
+	if (e.x != data->x_press)
+	{
+		printf("Event X = %s on window %i\n", (e.x == true) ? "true" : "false", data->id);
+		data->x_press = e.x;
+	}
 }
 
 

@@ -77,7 +77,7 @@ int kaContextStart(const struct jaConfiguration* cfg, struct jaStatus* st)
 		}
 
 		g_context.cfg_vsync = true;
-		g_context.cfg_filter = FILTER_BILINEAR;
+		g_context.cfg_filter = FILTER_NONE;
 		g_context.cfg_wireframe = false;
 	}
 
@@ -133,6 +133,19 @@ int kaContextUpdate(struct jaStatus* st)
 			case SDL_SCANCODE_X: g_context.events.y = true; break;
 			case SDL_SCANCODE_Q: g_context.events.lb = true; break;
 			case SDL_SCANCODE_W: g_context.events.rb = true; break;
+			default: break;
+			}
+		}
+		else if (e.type == SDL_KEYUP)
+		{
+			switch (e.key.keysym.scancode)
+			{
+			case SDL_SCANCODE_A: g_context.events.a = false; break;
+			case SDL_SCANCODE_S: g_context.events.b = false; break;
+			case SDL_SCANCODE_Z: g_context.events.x = false; break;
+			case SDL_SCANCODE_X: g_context.events.y = false; break;
+			case SDL_SCANCODE_Q: g_context.events.lb = false; break;
+			case SDL_SCANCODE_W: g_context.events.rb = false; break;
 
 			case SDL_SCANCODE_F1: f_keys = (f_keys | (0x01)); break;
 			case SDL_SCANCODE_F2: f_keys = (f_keys | (0x01 << 1)); break;
@@ -150,19 +163,6 @@ int kaContextUpdate(struct jaStatus* st)
 			default: break;
 			}
 		}
-		else if (e.type == SDL_KEYUP)
-		{
-			switch (e.key.keysym.scancode)
-			{
-			case SDL_SCANCODE_A: g_context.events.a = false; break;
-			case SDL_SCANCODE_S: g_context.events.b = false; break;
-			case SDL_SCANCODE_Z: g_context.events.x = false; break;
-			case SDL_SCANCODE_X: g_context.events.y = false; break;
-			case SDL_SCANCODE_Q: g_context.events.lb = false; break;
-			case SDL_SCANCODE_W: g_context.events.rb = false; break;
-			default: break;
-			}
-		}
 		else if (e.type == SDL_WINDOWEVENT)
 		{
 			for (item = g_context.windows.first; item != NULL; item = item->next)
@@ -176,6 +176,8 @@ int kaContextUpdate(struct jaStatus* st)
 				window->delete_mark = true;
 			else if (e.window.event == SDL_WINDOWEVENT_RESIZED)
 				window->resized_mark = true;
+			else if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
+				g_context.focused_window = window;
 		}
 	}
 
@@ -239,10 +241,15 @@ int kaContextUpdate(struct jaStatus* st)
 		}
 
 		if (window->frame_callback != NULL)
-			window->frame_callback(window, &g_context.events, window->user_data);
+		{
+			if (g_context.focused_window == window)
+				window->frame_callback(window, g_context.events, window->user_data);
+			else
+				window->frame_callback(window, (struct kaEvents){0}, window->user_data);
+		}
 
 		// Function keys (if any)
-		if (f_keys != 0 && window->function_callback != NULL)
+		if (f_keys != 0 && g_context.focused_window == window && window->function_callback != NULL)
 		{
 			int key_no = 1;
 
@@ -261,7 +268,7 @@ int kaContextUpdate(struct jaStatus* st)
 
 
 int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*),
-                   void (*frame_callback)(struct kaWindow*, const struct kaEvents*, void*),
+                   void (*frame_callback)(struct kaWindow*, struct kaEvents, void*),
                    void (*resize_callback)(struct kaWindow*, int, int, void*),
                    void (*function_callback)(struct kaWindow*, int, void*),
                    void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st)
@@ -308,6 +315,9 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	SDL_SetWindowMinimumSize(window->sdl_window, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
 	SDL_GL_SetSwapInterval((g_context.cfg_vsync == true) ? 1 : 0);
 
+	SDL_RaiseWindow(window->sdl_window);
+	g_context.focused_window = window;
+
 	// Initialize GLAD (after context creation)
 	// FIXME, this probably don't survive to multiple contexts
 	if (g_context.windows.items_no == 1)
@@ -329,41 +339,60 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-	glEnableVertexAttribArray(ATTRIBUTE_COLOUR);
 	glEnableVertexAttribArray(ATTRIBUTE_POSITION);
-	glEnableVertexAttribArray(ATTRIBUTE_NORMAL);
+	glEnableVertexAttribArray(ATTRIBUTE_COLOUR);
 	glEnableVertexAttribArray(ATTRIBUTE_UV);
 
-	// Create some generic geometry (TODO, check errors)
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	// Create some default geometry (TODO, check errors)
 	{
 		uint16_t raw_index[] = {0, 1, 2, 0, 2, 3};
-		struct kaVertex raw_vertices[] = {{.position = {-0.5f, -0.5f, 0.0f}, .colour = {1.0f, 0.0f, 0.0f, 1.0f}},
-		                                  {.position = {-0.5f, +0.5f, 0.0f}, .colour = {0.0f, 1.0f, 0.0f, 1.0f}},
-		                                  {.position = {+0.5f, +0.5f, 0.0f}, .colour = {0.0f, 0.0f, 1.0f, 1.0f}},
-		                                  {.position = {+0.5f, -0.5f, 0.0f}, .colour = {1.0f, 0.0f, 1.0f, 1.0f}}};
+		struct kaVertex raw_vertices[] = {
+		    {.position = {-0.5f, -0.5f, 0.0f}, .colour = {1.0f, 0.0f, 0.0f, 1.0f}, .uv = {0.0f, 1.0f}},
+		    {.position = {-0.5f, +0.5f, 0.0f}, .colour = {0.0f, 1.0f, 0.0f, 1.0f}, .uv = {0.0f, 0.0f}},
+		    {.position = {+0.5f, +0.5f, 0.0f}, .colour = {0.0f, 0.0f, 1.0f, 1.0f}, .uv = {1.0f, 0.0f}},
+		    {.position = {+0.5f, -0.5f, 0.0f}, .colour = {0.5f, 0.5f, 0.5f, 1.0f}, .uv = {1.0f, 1.0f}}};
 
 		const char* vertex_code =
 		    "#version 100\n"
-		    "attribute vec3 vertex_position; attribute vec3 vertex_normal;"
-		    "attribute vec4 vertex_colour; attribute vec2 vertex_uv;"
+		    "attribute vec3 vertex_position; attribute vec4 vertex_colour; attribute vec2 vertex_uv;"
 		    "uniform mat4 world; uniform mat4 camera; uniform vec3 camera_position;"
 		    "uniform vec3 local_position; uniform vec3 local_scale;"
-		    "varying vec4 colour;"
+		    "varying vec4 colour; varying vec2 uv;"
 
-		    "void main() { colour = vertex_colour;"
+		    "void main() { colour = vertex_colour; uv = vertex_uv;"
 		    "gl_Position = world * camera * vec4(local_position + (vertex_position * local_scale), 1.0); }";
 
-		const char* fragment_code = "#version 100\n"
-		                            "varying lowp vec4 colour;"
+		const char* fragment_code =
+		    "#version 100\n"
+		    "uniform sampler2D texture0;"
+		    "varying lowp vec4 colour; varying lowp vec2 uv;"
 
-		                            "void main() { gl_FragColor = colour; }";
+		    "lowp vec4 Overlay(lowp vec4 a, lowp vec4 b) {"
+		    "return mix((1.0 - 2.0 * (1.0 - a) * (1.0 - b)), (2.0 * a * b), step(a, vec4(0.5)));}"
 
-		kaIndexInit(raw_index, 6, &window->generic_index, NULL);
-		kaVerticesInit(raw_vertices, 4, &window->generic_vertices, NULL);
-		kaProgramInit(vertex_code, fragment_code, &window->generic_program, NULL);
+		    "void main() { gl_FragColor = Overlay(colour, texture2D(texture0, uv)); }";
 
-		kaSetProgram(&window->generic_program);
-		kaSetVertices(&window->generic_vertices);
+		struct jaImage image = {0};
+		uint8_t image_data[] = {128 + 16, 128 - 16, 128 - 16, 128 + 16};
+
+		image.channels = 1;
+		image.format = JA_IMAGE_U8;
+		image.width = 2;
+		image.height = 2;
+		image.size = sizeof(image_data);
+		image.data = image_data;
+
+		kaIndexInit(raw_index, 6, &window->default_index, NULL);
+		kaVerticesInit(raw_vertices, 4, &window->default_vertices, NULL);
+		kaProgramInit(vertex_code, fragment_code, &window->default_program, NULL);
+		kaTextureInitImage(&image, &window->default_texture, NULL);
+
+		kaSetProgram(&window->default_program);
+		kaSetVertices(&window->default_vertices);
+		kaSetTexture(0, &window->default_texture);
 	}
 
 	// First callback

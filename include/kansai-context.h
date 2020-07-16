@@ -30,10 +30,22 @@ struct kaWindow;
 
 struct kaEvents
 {
-	bool a, b, x, y;
-	bool lb, rb;
-	bool view, menu, guide; // TODO
-	bool ls, rs;            // TODO
+	struct
+	{
+		bool a : 1;
+		bool b : 1;
+		bool x : 1;
+		bool y : 1;
+
+		bool lb : 1;
+		bool rb : 1;
+		bool ls : 1;
+		bool rs : 1;
+
+		bool view : 1;
+		bool menu : 1;
+		bool guide : 1;
+	};
 
 	struct { float h, v; } pad; // TODO
 	struct { float h, v, t; } left_analog; // TODO
@@ -47,9 +59,8 @@ struct kaProgram
 
 struct kaVertex
 {
-	struct jaVector4 colour;
 	struct jaVector3 position;
-	struct jaVector3 normal;
+	struct jaVector4 colour;
 	struct jaVector2 uv;
 };
 
@@ -76,7 +87,7 @@ KA_EXPORT void kaContextStop();
 KA_EXPORT int kaContextUpdate(struct jaStatus* st);
 
 KA_EXPORT int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*),
-                             void (*frame_callback)(struct kaWindow*, const struct kaEvents*, void*),
+                             void (*frame_callback)(struct kaWindow*, struct kaEvents, void*),
                              void (*resize_callback)(struct kaWindow*, int, int, void*),
                              void (*function_callback)(struct kaWindow*, int, void*),
                              void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st);
@@ -102,7 +113,7 @@ KA_EXPORT void kaTextureFree(struct kaTexture* texture);
 
 KA_EXPORT void kaSetProgram(const struct kaProgram* program);
 KA_EXPORT void kaSetVertices(const struct kaVertices* vertices);
-KA_EXPORT void SetTexture(int unit, const struct kaTexture* texture);
+KA_EXPORT void kaSetTexture(int unit, const struct kaTexture* texture);
 
 KA_EXPORT void kaSetWorld(struct jaMatrix4 matrix);
 KA_EXPORT void kaSetCameraLookAt(struct jaVector3 target, struct jaVector3 origin);
