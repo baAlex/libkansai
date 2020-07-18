@@ -29,7 +29,7 @@ static void sInit(struct kaWindow* window, void* user_data, struct jaStatus* st)
 	jaStatusSet(st, "sInit", JA_STATUS_SUCCESS, NULL);
 
 	kaSetCameraMatrix(jaMatrix4Identity(), jaVector3Clean());
-	kaSetWorld(jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 1.0f));
+	kaSetWorld(jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 2.0f));
 }
 
 
@@ -41,19 +41,14 @@ static void sFrame(struct kaWindow* window, struct kaEvents e, float delta, void
 
 	jaStatusSet(st, "sFrame", JA_STATUS_SUCCESS, NULL);
 
+	float x = 160.0f + sinf(data->phase) * 80.0f;
+	float y = 120.0f + sinf(data->phase / 4.0f) * 60.0f;
+
+	kaDrawSprite((struct jaVector3){x, y, 1.0f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
+	data->phase += 0.125f * delta;
+
 	if (data->id == 0)
-	{
-		kaDrawSprite((struct jaVector3){160.0f, 120.0f, 0.0f}, (struct jaVector3){320.0f, 240.0f, 0.0f});
-	}
-
-	{
-		float x = 160.0f + sinf(data->phase) * 80.0f;
-		float y = 120.0f + sinf(data->phase / 4.0f) * 60.0f;
-
-		kaDrawSprite((struct jaVector3){x, y, 0.5f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
-
-		data->phase += 0.125f * delta;
-	}
+		kaDrawSprite((struct jaVector3){160.0f, 120.0f, 1.0f}, (struct jaVector3){320.0f, 240.0f, 0.0f});
 
 	if (e.x != data->x_press)
 	{

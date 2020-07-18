@@ -471,3 +471,9 @@ inline void kaTextureFree(struct kaTexture* texture)
 		texture->glptr = 0;
 	}
 }
+
+
+inline void kaSetCleanColor(uint8_t r, uint8_t g, uint8_t b)
+{
+	glClearColor((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
+}

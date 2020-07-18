@@ -128,12 +128,19 @@ int kaContextUpdate(struct jaStatus* st)
 		{
 			switch (e.key.keysym.scancode)
 			{
-			case SDL_SCANCODE_A: g_context.events.a = true; break;
-			case SDL_SCANCODE_S: g_context.events.b = true; break;
-			case SDL_SCANCODE_Z: g_context.events.x = true; break;
-			case SDL_SCANCODE_X: g_context.events.y = true; break;
-			case SDL_SCANCODE_Q: g_context.events.lb = true; break;
-			case SDL_SCANCODE_W: g_context.events.rb = true; break;
+			case SDL_SCANCODE_Z: g_context.events.a = true; break;
+			case SDL_SCANCODE_Y: g_context.events.b = true; break;
+			case SDL_SCANCODE_A: g_context.events.x = true; break;
+			case SDL_SCANCODE_S: g_context.events.y = true; break;
+
+			case SDL_SCANCODE_RETURN: g_context.events.start = true; break;
+			case SDL_SCANCODE_SPACE: g_context.events.select = true; break;
+
+			case SDL_SCANCODE_UP: g_context.events.pad_u = true; break;
+			case SDL_SCANCODE_DOWN: g_context.events.pad_d = true; break;
+			case SDL_SCANCODE_LEFT: g_context.events.pad_l = true; break;
+			case SDL_SCANCODE_RIGHT: g_context.events.pad_r = true; break;
+
 			default: break;
 			}
 		}
@@ -141,12 +148,18 @@ int kaContextUpdate(struct jaStatus* st)
 		{
 			switch (e.key.keysym.scancode)
 			{
-			case SDL_SCANCODE_A: g_context.events.a = false; break;
-			case SDL_SCANCODE_S: g_context.events.b = false; break;
-			case SDL_SCANCODE_Z: g_context.events.x = false; break;
-			case SDL_SCANCODE_X: g_context.events.y = false; break;
-			case SDL_SCANCODE_Q: g_context.events.lb = false; break;
-			case SDL_SCANCODE_W: g_context.events.rb = false; break;
+			case SDL_SCANCODE_Z: g_context.events.a = false; break;
+			case SDL_SCANCODE_Y: g_context.events.b = false; break;
+			case SDL_SCANCODE_A: g_context.events.x = false; break;
+			case SDL_SCANCODE_S: g_context.events.y = false; break;
+
+			case SDL_SCANCODE_RETURN: g_context.events.start = false; break;
+			case SDL_SCANCODE_SPACE: g_context.events.select = false; break;
+
+			case SDL_SCANCODE_UP: g_context.events.pad_u = false; break;
+			case SDL_SCANCODE_DOWN: g_context.events.pad_d = false; break;
+			case SDL_SCANCODE_LEFT: g_context.events.pad_l = false; break;
+			case SDL_SCANCODE_RIGHT: g_context.events.pad_r = false; break;
 
 			case SDL_SCANCODE_F1: f_keys = (f_keys | (0x01)); break;
 			case SDL_SCANCODE_F2: f_keys = (f_keys | (0x01 << 1)); break;
@@ -182,6 +195,9 @@ int kaContextUpdate(struct jaStatus* st)
 		}
 	}
 
+	g_context.events.pad.y = ((g_context.events.pad_u) ? 1.0f : 0.0f) - ((g_context.events.pad_d) ? 1.0f : 0.0f);
+	g_context.events.pad.x = ((g_context.events.pad_r) ? 1.0f : 0.0f) - ((g_context.events.pad_l) ? 1.0f : 0.0f);
+
 	// Flip windows buffer and call non-frequent callbacks
 	{
 		struct jaListState it = {0};
@@ -202,7 +218,7 @@ int kaContextUpdate(struct jaStatus* st)
 			if (g_context.focused_window == window || (g_context.frame_no % 4) == 0)
 			{
 				SDL_GL_SwapWindow(window->sdl_window);
-				glClear(GL_COLOR_BUFFER_BIT);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			}
 
 			// Following callbacks after MakeCurrent(), so in case a draw f_keys
@@ -369,8 +385,8 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		printf("%s\n\n", glGetString(GL_VERSION));
 	}
 
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_DITHER);
-	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -432,7 +448,7 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	}
 
 	// First callback
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (window->init_callback != NULL)
 		window->init_callback(window, window->user_data, &callback_st);
@@ -511,4 +527,10 @@ return_failure:
 		jaImageDelete(image);
 
 	return 1;
+}
+
+
+uint32_t kaCurrentMilliseconds()
+{
+	return SDL_GetTicks();
 }

@@ -32,24 +32,16 @@ struct kaEvents
 {
 	struct
 	{
-		bool a : 1;
-		bool b : 1;
-		bool x : 1;
-		bool y : 1;
+		bool a : 1; bool b : 1; // XBOX order
+		bool x : 1; bool y : 1;
 
-		bool lb : 1;
-		bool rb : 1;
-		bool ls : 1;
-		bool rs : 1;
+		bool select : 1; bool start : 1; // SNES order
 
-		bool view : 1;
-		bool menu : 1;
-		bool guide : 1;
+		bool pad_u : 1; bool pad_d : 1;
+		bool pad_l : 1; bool pad_r : 1;
 	};
 
-	struct { float h, v; } pad; // TODO
-	struct { float h, v, t; } left_analog; // TODO
-	struct { float h, v, t; } right_analog; // TODO
+	struct jaVector2 pad;
 };
 
 struct kaProgram
@@ -93,8 +85,6 @@ KA_EXPORT int kaWindowCreate(const char* caption, void (*init_callback)(struct k
                              void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st);
 KA_EXPORT void kaWindowDelete(struct kaWindow* window);
 
-KA_EXPORT int kaTakeScreenshot(const struct kaWindow* window, const char* filename, struct jaStatus* st);
-
 //
 
 KA_EXPORT int kaProgramInit(const char* vertex_code, const char* fragment_code, struct kaProgram* out,
@@ -121,5 +111,9 @@ KA_EXPORT void kaSetCameraMatrix(struct jaMatrix4 matrix, struct jaVector3 origi
 
 KA_EXPORT void kaDraw(const struct kaIndex* index);
 KA_EXPORT void kaDrawSprite(struct jaVector3 position, struct jaVector3 scale);
+
+KA_EXPORT int kaTakeScreenshot(const struct kaWindow* window, const char* filename, struct jaStatus* st);
+KA_EXPORT void kaSetCleanColor(uint8_t r, uint8_t g, uint8_t b);
+KA_EXPORT uint32_t kaCurrentMilliseconds();
 
 #endif
