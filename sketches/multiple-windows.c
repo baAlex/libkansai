@@ -15,28 +15,24 @@ struct WindowData
 {
 	int id;
 	int screenshot_counter;
-
 	bool x_press;
 	float phase;
 };
 
 
-static void sInit(struct kaWindow* window, void* user_data, struct jaStatus* st)
+static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 {
-	(void)window;
 	(void)user_data;
 
 	jaStatusSet(st, "sInit", JA_STATUS_SUCCESS, NULL);
 
-	kaSetCameraMatrix(jaMatrix4Identity(), jaVector3Clean());
-	kaSetWorld(jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 2.0f));
+	kaSetCameraMatrix(w, jaMatrix4Identity(), jaVector3Clean());
+	kaSetWorld(w, jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 2.0f));
 }
 
 
-static void sFrame(struct kaWindow* window, struct kaEvents e, float delta, void* user_data, struct jaStatus* st)
+static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* user_data, struct jaStatus* st)
 {
-	(void)window;
-	(void)e;
 	struct WindowData* data = user_data;
 
 	jaStatusSet(st, "sFrame", JA_STATUS_SUCCESS, NULL);
@@ -44,11 +40,11 @@ static void sFrame(struct kaWindow* window, struct kaEvents e, float delta, void
 	float x = 160.0f + sinf(data->phase) * 80.0f;
 	float y = 120.0f + sinf(data->phase / 4.0f) * 60.0f;
 
-	kaDrawSprite((struct jaVector3){x, y, 1.0f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
+	kaDrawSprite(w, (struct jaVector3){x, y, 1.0f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
 	data->phase += 0.125f * delta;
 
 	if (data->id == 0)
-		kaDrawSprite((struct jaVector3){160.0f, 120.0f, 1.0f}, (struct jaVector3){320.0f, 240.0f, 0.0f});
+		kaDrawSprite(w, (struct jaVector3){160.0f, 120.0f, 1.0f}, (struct jaVector3){320.0f, 240.0f, 0.0f});
 
 	if (e.x != data->x_press)
 	{
@@ -58,16 +54,17 @@ static void sFrame(struct kaWindow* window, struct kaEvents e, float delta, void
 }
 
 
-static void sResize(struct kaWindow* window, int width, int height, void* user_data, struct jaStatus* st)
+static void sResize(struct kaWindow* w, int width, int height, void* user_data, struct jaStatus* st)
 {
-	(void)window;
+	(void)w;
 	(void)st;
+
 	struct WindowData* data = user_data;
 	printf("Window %i resized to %i, %i\n", data->id, width, height);
 }
 
 
-static void sFunction(struct kaWindow* window, int f, void* user_data, struct jaStatus* st)
+static void sFunction(struct kaWindow* w, int f, void* user_data, struct jaStatus* st)
 {
 	struct WindowData* data = user_data;
 
@@ -76,6 +73,7 @@ static void sFunction(struct kaWindow* window, int f, void* user_data, struct ja
 
 	if (f == 12)
 	{
+		struct jaImage* image = NULL;
 		char tstr[64];
 		char filename[256];
 
@@ -86,14 +84,19 @@ static void sFunction(struct kaWindow* window, int f, void* user_data, struct ja
 		sprintf(filename, "%s - %s (%i%i).sgi", NAME, tstr, data->id, data->screenshot_counter);
 
 		data->screenshot_counter += 1;
-		kaTakeScreenshot(window, filename, st);
+
+		if ((image = kaTakeScreenshot(w, st)) == NULL)
+			return;
+
+		if (jaImageSaveSgi(image, filename, st) != 0)
+			return;
 	}
 }
 
 
-static void sClose(struct kaWindow* window, void* user_data)
+static void sClose(struct kaWindow* w, void* user_data)
 {
-	(void)window;
+	(void)w;
 
 	struct WindowData* data = user_data;
 	printf("Close request for window %i...\n", data->id);

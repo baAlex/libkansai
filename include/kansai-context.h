@@ -32,13 +32,18 @@ struct kaEvents
 {
 	struct
 	{
-		bool a : 1; bool b : 1; // XBOX order
-		bool x : 1; bool y : 1;
+		bool a : 1; // XBOX order
+		bool b : 1;
+		bool x : 1;
+		bool y : 1;
 
-		bool select : 1; bool start : 1; // SNES order
+		bool select : 1; // SNES order
+		bool start : 1;
 
-		bool pad_u : 1; bool pad_d : 1;
-		bool pad_l : 1; bool pad_r : 1;
+		bool pad_u : 1;
+		bool pad_d : 1;
+		bool pad_l : 1;
+		bool pad_r : 1;
 	};
 
 	struct jaVector2 pad;
@@ -74,46 +79,68 @@ struct kaTexture
 };
 
 
+/// Starts context. An abstraction over SDL2 and OpenGL. An monolithic, single threaded object that
+/// requires initialization. Call it before any other Kansai function.
+/// @return A value of 0 if succeed
 KA_EXPORT int kaContextStart(const struct jaConfiguration*, struct jaStatus* st);
+
+/// Stops context. Be sure of call it before the program exits.
 KA_EXPORT void kaContextStop();
+
+/// Updates one frame of all windows created in the context. Does a buffer flip, verifies new
+/// input, cleans the old buffer and call required windows callbacks.
+/// @return A value of 0 if succeed. A value of 1 if there is no window attached to the context
+/// and thus no need of call this function for new frames. A value of 2 if there is an error.
 KA_EXPORT int kaContextUpdate(struct jaStatus* st);
 
+/// Creates a window. Is possible to create multiple of them.
+/// @return A value of 0 if succeed.
 KA_EXPORT int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
                              void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
                              void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
                              void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*),
                              void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st);
+
+/// Deletes window. You can avoid this function as long you call 'ContextStop' at the end of the day.
 KA_EXPORT void kaWindowDelete(struct kaWindow* window);
 
 //
 
-KA_EXPORT int kaProgramInit(const char* vertex_code, const char* fragment_code, struct kaProgram* out,
-                            struct jaStatus* st);
-KA_EXPORT void kaProgramFree(struct kaProgram* program);
+KA_EXPORT int kaProgramInit(struct kaWindow* window, const char* vertex_code, const char* fragment_code,
+                            struct kaProgram* out, struct jaStatus* st);
+KA_EXPORT void kaProgramFree(struct kaWindow* window, struct kaProgram* program);
 
-KA_EXPORT int kaVerticesInit(const struct kaVertex* data, uint16_t length, struct kaVertices* out, struct jaStatus* st);
-KA_EXPORT void kaVerticesFree(struct kaVertices* vertices);
+KA_EXPORT int kaVerticesInit(struct kaWindow* window, const struct kaVertex* data, uint16_t length,
+                             struct kaVertices* out, struct jaStatus* st);
+KA_EXPORT void kaVerticesFree(struct kaWindow* window, struct kaVertices* vertices);
 
-KA_EXPORT int kaIndexInit(const uint16_t* data, size_t length, struct kaIndex* out, struct jaStatus* st);
-KA_EXPORT void kaIndexFree(struct kaIndex* index);
+KA_EXPORT int kaIndexInit(struct kaWindow* window, const uint16_t* data, size_t length, struct kaIndex* out,
+                          struct jaStatus* st);
+KA_EXPORT void kaIndexFree(struct kaWindow* window, struct kaIndex* index);
 
-KA_EXPORT int kaTextureInitImage(const struct jaImage* image, struct kaTexture* out, struct jaStatus* st);
-KA_EXPORT int kaTextureInitFilename(const char* image_filename, struct kaTexture* out, struct jaStatus* st);
-KA_EXPORT void kaTextureFree(struct kaTexture* texture);
+KA_EXPORT int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, struct kaTexture* out,
+                                 struct jaStatus* st);
+KA_EXPORT int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, struct kaTexture* out,
+                                    struct jaStatus* st);
+KA_EXPORT void kaTextureFree(struct kaWindow* window, struct kaTexture* texture);
 
-KA_EXPORT void kaSetProgram(const struct kaProgram* program);
-KA_EXPORT void kaSetVertices(const struct kaVertices* vertices);
-KA_EXPORT void kaSetTexture(int unit, const struct kaTexture* texture);
+//
 
-KA_EXPORT void kaSetWorld(struct jaMatrix4 matrix);
-KA_EXPORT void kaSetCameraLookAt(struct jaVector3 target, struct jaVector3 origin);
-KA_EXPORT void kaSetCameraMatrix(struct jaMatrix4 matrix, struct jaVector3 origin);
+KA_EXPORT void kaSetProgram(struct kaWindow* window, const struct kaProgram* program);
+KA_EXPORT void kaSetVertices(struct kaWindow* window, const struct kaVertices* vertices);
+KA_EXPORT void kaSetTexture(struct kaWindow* window, int unit, const struct kaTexture* texture);
 
-KA_EXPORT void kaDraw(const struct kaIndex* index);
-KA_EXPORT void kaDrawSprite(struct jaVector3 position, struct jaVector3 scale);
+KA_EXPORT void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix);
+KA_EXPORT void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, struct jaVector3 origin);
+KA_EXPORT void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, struct jaVector3 origin);
 
-KA_EXPORT int kaTakeScreenshot(const struct kaWindow* window, const char* filename, struct jaStatus* st);
-KA_EXPORT void kaSetCleanColor(uint8_t r, uint8_t g, uint8_t b);
-KA_EXPORT uint32_t kaCurrentMilliseconds();
+KA_EXPORT void kaDraw(struct kaWindow* window, const struct kaIndex* index);
+KA_EXPORT void kaDrawSprite(struct kaWindow* window, struct jaVector3 position, struct jaVector3 scale);
+
+KA_EXPORT struct jaImage* kaTakeScreenshot(struct kaWindow* window, struct jaStatus* st);
+
+KA_EXPORT void kaSetCleanColor(struct kaWindow* window, uint8_t r, uint8_t g, uint8_t b);
+KA_EXPORT size_t kaGetTime(struct kaWindow* window);
+KA_EXPORT size_t kaGetFrame(struct kaWindow* window);
 
 #endif

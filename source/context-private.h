@@ -36,6 +36,7 @@ struct kaWindow
 	void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*);
 	void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*);
 	void (*close_callback)(struct kaWindow*, void*);
+
 	void* user_data;
 	bool delete_mark;
 	bool resized_mark;
@@ -58,12 +59,15 @@ struct kaWindow
 		GLint camera;
 		GLint camera_position;
 		GLint texture[8];
+
 	} uniform; // For current program
 
 	struct kaVertices default_vertices;
 	struct kaIndex default_index;
 	struct kaProgram default_program;
 	struct kaTexture default_texture;
+
+	struct jaImage* temp_image;
 
 	// ---- SDL2 side ----
 	SDL_Window* sdl_window;
@@ -73,9 +77,8 @@ struct kaWindow
 struct kaContext
 {
 	// ---- Agnostic side ----
-	enum Filter cfg_filter;
+	enum Filter cfg_filter; // TODO, move to window
 	bool cfg_vsync;
-	bool cfg_wireframe;
 	size_t frame_no;
 
 	// ---- SDL2 side ----
@@ -83,7 +86,6 @@ struct kaContext
 	struct jaList windows;
 	struct kaEvents events;
 
-	struct kaWindow* current_window;
 	struct kaWindow* focused_window;
 
 } g_context; // Globals! nooooo!

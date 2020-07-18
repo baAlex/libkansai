@@ -10,7 +10,7 @@
 #define EPSILON 0.1
 
 
-struct Data
+struct WindowData
 {
 	struct jaVector2 position;
 	struct kaXorshift rng;
@@ -18,26 +18,23 @@ struct Data
 };
 
 
-static void sInit(struct kaWindow* window, void* user_data, struct jaStatus* st)
+static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 {
-	(void)window;
 	(void)st;
+	struct WindowData* data = user_data;
 
-	struct Data* data = user_data;
 	data->position = jaVector2Set(160.0f, 120.0f);
-	kaSeedXorshift(&data->rng, 0);
+	kaSeed(&data->rng, 0);
 
-	kaSetCameraMatrix(jaMatrix4Identity(), jaVector3Clean());
-	kaSetWorld(jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 2.0f));
+	kaSetCameraMatrix(w, jaMatrix4Identity(), jaVector3Clean());
+	kaSetWorld(w, jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 2.0f));
 }
 
 
-static void sFrame(struct kaWindow* window, struct kaEvents e, float delta, void* user_data, struct jaStatus* st)
+static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* user_data, struct jaStatus* st)
 {
-	(void)window;
 	(void)st;
-
-	struct Data* data = user_data;
+	struct WindowData* data = user_data;
 
 	if (jaVector2Length(e.pad) > EPSILON)
 	{
@@ -52,20 +49,20 @@ static void sFrame(struct kaWindow* window, struct kaEvents e, float delta, void
 		if (data->start_press == false)
 		{
 			data->start_press = true;
-			kaSetCleanColor((uint8_t)(kaRandomXorshift(&data->rng) % 255),
-			                (uint8_t)(kaRandomXorshift(&data->rng) % 255),
-			                (uint8_t)(kaRandomXorshift(&data->rng) % 255));
+			kaSetCleanColor(w, (uint8_t)(kaRandom(&data->rng) % 255), (uint8_t)(kaRandom(&data->rng) % 255),
+			                (uint8_t)(kaRandom(&data->rng) % 255));
 		}
 	}
 
-	kaDrawSprite((struct jaVector3){data->position.x, data->position.y, 1.0f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
+	kaDrawSprite(w, (struct jaVector3){data->position.x, data->position.y, 1.0f},
+	             (struct jaVector3){64.0f, 64.0f, 0.0f});
 }
 
 
 int main()
 {
 	struct jaStatus st = {0};
-	struct Data data = {0};
+	struct WindowData data = {0};
 
 	if (kaContextStart(NULL, &st) != 0)
 		goto return_failure;

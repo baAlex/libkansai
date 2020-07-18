@@ -31,59 +31,50 @@ SOFTWARE.
 #include "context-private.h"
 
 
-/*-----------------------------
-
- Context state
------------------------------*/
-inline void kaSetProgram(const struct kaProgram* program)
+void kaSetProgram(struct kaWindow* window, const struct kaProgram* program)
 {
-	if (program != NULL && program != g_context.current_window->current_program)
+	if (program != NULL && program != window->current_program)
 	{
-		g_context.current_window->current_program = program;
+		window->current_program = program;
 
-		g_context.current_window->uniform.local_position = glGetUniformLocation(program->glptr, "local_position");
-		g_context.current_window->uniform.local_scale = glGetUniformLocation(program->glptr, "local_scale");
+		window->uniform.local_position = glGetUniformLocation(program->glptr, "local_position");
+		window->uniform.local_scale = glGetUniformLocation(program->glptr, "local_scale");
 
-		//
+		window->uniform.world = glGetUniformLocation(program->glptr, "world");
+		window->uniform.camera = glGetUniformLocation(program->glptr, "camera");
+		window->uniform.camera_position = glGetUniformLocation(program->glptr, "camera_position");
 
-		g_context.current_window->uniform.world = glGetUniformLocation(program->glptr, "world");
-		g_context.current_window->uniform.camera = glGetUniformLocation(program->glptr, "camera");
-		g_context.current_window->uniform.camera_position = glGetUniformLocation(program->glptr, "camera_position");
-
-		g_context.current_window->uniform.texture[0] = glGetUniformLocation(program->glptr, "texture0");
-		g_context.current_window->uniform.texture[1] = glGetUniformLocation(program->glptr, "texture1");
-		g_context.current_window->uniform.texture[2] = glGetUniformLocation(program->glptr, "texture2");
-		g_context.current_window->uniform.texture[3] = glGetUniformLocation(program->glptr, "texture3");
-		g_context.current_window->uniform.texture[4] = glGetUniformLocation(program->glptr, "texture4");
-		g_context.current_window->uniform.texture[5] = glGetUniformLocation(program->glptr, "texture5");
-		g_context.current_window->uniform.texture[6] = glGetUniformLocation(program->glptr, "texture6");
-		g_context.current_window->uniform.texture[7] = glGetUniformLocation(program->glptr, "texture7");
+		window->uniform.texture[0] = glGetUniformLocation(program->glptr, "texture0");
+		window->uniform.texture[1] = glGetUniformLocation(program->glptr, "texture1");
+		window->uniform.texture[2] = glGetUniformLocation(program->glptr, "texture2");
+		window->uniform.texture[3] = glGetUniformLocation(program->glptr, "texture3");
+		window->uniform.texture[4] = glGetUniformLocation(program->glptr, "texture4");
+		window->uniform.texture[5] = glGetUniformLocation(program->glptr, "texture5");
+		window->uniform.texture[6] = glGetUniformLocation(program->glptr, "texture6");
+		window->uniform.texture[7] = glGetUniformLocation(program->glptr, "texture7");
 
 		glUseProgram(program->glptr);
 
-		glUniformMatrix4fv(g_context.current_window->uniform.world, 1, GL_FALSE,
-		                   &g_context.current_window->world.e[0][0]);
-		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
-		                   &g_context.current_window->camera.e[0][0]);
-		glUniform3fv(g_context.current_window->uniform.camera_position, 1,
-		             (float*)&g_context.current_window->camera_position);
-		glUniform1i(g_context.current_window->uniform.texture[0], 0);
-		glUniform1i(g_context.current_window->uniform.texture[1], 1);
-		glUniform1i(g_context.current_window->uniform.texture[2], 2);
-		glUniform1i(g_context.current_window->uniform.texture[3], 3);
-		glUniform1i(g_context.current_window->uniform.texture[4], 4);
-		glUniform1i(g_context.current_window->uniform.texture[5], 5);
-		glUniform1i(g_context.current_window->uniform.texture[6], 6);
-		glUniform1i(g_context.current_window->uniform.texture[7], 7);
+		glUniformMatrix4fv(window->uniform.world, 1, GL_FALSE, &window->world.e[0][0]);
+		glUniformMatrix4fv(window->uniform.camera, 1, GL_FALSE, &window->camera.e[0][0]);
+		glUniform3fv(window->uniform.camera_position, 1, (float*)&window->camera_position);
+		glUniform1i(window->uniform.texture[0], 0);
+		glUniform1i(window->uniform.texture[1], 1);
+		glUniform1i(window->uniform.texture[2], 2);
+		glUniform1i(window->uniform.texture[3], 3);
+		glUniform1i(window->uniform.texture[4], 4);
+		glUniform1i(window->uniform.texture[5], 5);
+		glUniform1i(window->uniform.texture[6], 6);
+		glUniform1i(window->uniform.texture[7], 7);
 	}
 }
 
 
-inline void kaSetVertices(const struct kaVertices* vertices)
+inline void kaSetVertices(struct kaWindow* window, const struct kaVertices* vertices)
 {
-	if (vertices != NULL && vertices != g_context.current_window->current_vertices)
+	if (vertices != NULL && vertices != window->current_vertices)
 	{
-		g_context.current_window->current_vertices = vertices;
+		window->current_vertices = vertices;
 
 		glBindBuffer(GL_ARRAY_BUFFER, vertices->glptr);
 		glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
@@ -93,11 +84,11 @@ inline void kaSetVertices(const struct kaVertices* vertices)
 }
 
 
-inline void kaSetTexture(int unit, const struct kaTexture* texture)
+inline void kaSetTexture(struct kaWindow* window, int unit, const struct kaTexture* texture)
 {
-	if (texture != NULL && texture != g_context.current_window->current_texture)
+	if (texture != NULL && texture != window->current_texture)
 	{
-		g_context.current_window->current_texture = texture;
+		window->current_texture = texture;
 
 		glActiveTexture((GLenum)(GL_TEXTURE0 + unit));
 		glBindTexture(GL_TEXTURE_2D, texture->glptr);
@@ -105,73 +96,64 @@ inline void kaSetTexture(int unit, const struct kaTexture* texture)
 }
 
 
-inline void kaSetWorld(struct jaMatrix4 matrix)
+inline void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix)
 {
-	memcpy(&g_context.current_window->world, &matrix, sizeof(struct jaMatrix4));
+	memcpy(&window->world, &matrix, sizeof(struct jaMatrix4));
 
-	if (g_context.current_window->current_program != NULL)
-		glUniformMatrix4fv(g_context.current_window->uniform.world, 1, GL_FALSE,
-		                   &g_context.current_window->world.e[0][0]);
+	if (window->current_program != NULL)
+		glUniformMatrix4fv(window->uniform.world, 1, GL_FALSE, &window->world.e[0][0]);
 }
 
 
-inline void kaSetCameraLookAt(struct jaVector3 target, struct jaVector3 origin)
+inline void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, struct jaVector3 origin)
 {
-	g_context.current_window->camera_position = origin;
-	g_context.current_window->camera = jaMatrix4LookAt(origin, target, (struct jaVector3){0.0f, 0.0f, 1.0f});
+	window->camera_position = origin;
+	window->camera = jaMatrix4LookAt(origin, target, (struct jaVector3){0.0f, 0.0f, 1.0f});
 
-	if (g_context.current_window->current_program != NULL)
+	if (window->current_program != NULL)
 	{
-		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
-		                   &g_context.current_window->camera.e[0][0]);
-		glUniform3fv(g_context.current_window->uniform.camera_position, 1,
-		             (float*)&g_context.current_window->camera_position);
+		glUniformMatrix4fv(window->uniform.camera, 1, GL_FALSE, &window->camera.e[0][0]);
+		glUniform3fv(window->uniform.camera_position, 1, (float*)&window->camera_position);
 	}
 }
 
 
-inline void kaSetCameraMatrix(struct jaMatrix4 matrix, struct jaVector3 origin)
+inline void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, struct jaVector3 origin)
 {
-	g_context.current_window->camera_position = origin;
-	g_context.current_window->camera = matrix;
+	window->camera_position = origin;
+	window->camera = matrix;
 
-	if (g_context.current_window->current_program != NULL)
+	if (window->current_program != NULL)
 	{
-		glUniformMatrix4fv(g_context.current_window->uniform.camera, 1, GL_FALSE,
-		                   &g_context.current_window->camera.e[0][0]);
-		glUniform3fv(g_context.current_window->uniform.camera_position, 1,
-		             (float*)&g_context.current_window->camera_position);
+		glUniformMatrix4fv(window->uniform.camera, 1, GL_FALSE, &window->camera.e[0][0]);
+		glUniform3fv(window->uniform.camera_position, 1, (float*)&window->camera_position);
 	}
 }
 
 
-inline void kaDraw(const struct kaIndex* index)
+inline void kaDraw(struct kaWindow* window, const struct kaIndex* index)
 {
+	(void)window;
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index->glptr);
-	glDrawElements((g_context.cfg_wireframe == false) ? GL_TRIANGLES : GL_LINES, (GLsizei)index->length,
-	               GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (GLsizei)index->length, GL_UNSIGNED_SHORT, NULL);
 }
 
 
-inline void kaDrawSprite(struct jaVector3 position, struct jaVector3 scale)
+inline void kaDrawSprite(struct kaWindow* window, struct jaVector3 position, struct jaVector3 scale)
 {
 	// Incredible inefficient!
-	const struct kaVertices* prev_vertices = g_context.current_window->current_vertices;
-	kaSetVertices(&g_context.current_window->default_vertices);
+	const struct kaVertices* prev_vertices = window->current_vertices;
+	kaSetVertices(window, &window->default_vertices);
 
-	glUniform3fv(g_context.current_window->uniform.local_position, 1, (float*)&position);
-	glUniform3fv(g_context.current_window->uniform.local_scale, 1, (float*)&scale);
-	kaDraw(&g_context.current_window->default_index);
+	glUniform3fv(window->uniform.local_position, 1, (float*)&position);
+	glUniform3fv(window->uniform.local_scale, 1, (float*)&scale);
+	kaDraw(window, &window->default_index);
 
-	if (prev_vertices != &g_context.current_window->default_vertices)
-		kaSetVertices(prev_vertices);
+	if (prev_vertices != &window->default_vertices)
+		kaSetVertices(window, prev_vertices);
 }
 
 
-/*-----------------------------
-
- OpenGL abstractions
------------------------------*/
 static inline int sCompileShader(GLuint shader, struct jaStatus* st)
 {
 	GLint success = GL_FALSE;
@@ -190,8 +172,10 @@ static inline int sCompileShader(GLuint shader, struct jaStatus* st)
 }
 
 
-int kaProgramInit(const char* vertex_code, const char* fragment_code, struct kaProgram* out, struct jaStatus* st)
+int kaProgramInit(struct kaWindow* window, const char* vertex_code, const char* fragment_code, struct kaProgram* out,
+                  struct jaStatus* st)
 {
+	(void)window;
 	GLint success = GL_FALSE;
 	GLuint vertex = 0;
 	GLuint fragment = 0;
@@ -253,8 +237,10 @@ return_failure:
 }
 
 
-inline void kaProgramFree(struct kaProgram* program)
+inline void kaProgramFree(struct kaWindow* window, struct kaProgram* program)
 {
+	(void)window;
+
 	if (program->glptr != 0)
 	{
 		glDeleteProgram(program->glptr);
@@ -263,8 +249,10 @@ inline void kaProgramFree(struct kaProgram* program)
 }
 
 
-int kaVerticesInit(const struct kaVertex* data, uint16_t length, struct kaVertices* out, struct jaStatus* st)
+int kaVerticesInit(struct kaWindow* window, const struct kaVertex* data, uint16_t length, struct kaVertices* out,
+                   struct jaStatus* st)
 {
+	(void)window;
 	GLint reported_size = 0;
 	GLint old_bind = 0;
 
@@ -305,8 +293,10 @@ return_failure:
 }
 
 
-inline void kaVerticesFree(struct kaVertices* vertices)
+inline void kaVerticesFree(struct kaWindow* window, struct kaVertices* vertices)
 {
+	(void)window;
+
 	if (vertices->glptr != 0)
 	{
 		glDeleteBuffers(1, &vertices->glptr);
@@ -315,8 +305,9 @@ inline void kaVerticesFree(struct kaVertices* vertices)
 }
 
 
-int kaIndexInit(const uint16_t* data, size_t length, struct kaIndex* out, struct jaStatus* st)
+int kaIndexInit(struct kaWindow* window, const uint16_t* data, size_t length, struct kaIndex* out, struct jaStatus* st)
 {
+	(void)window;
 	GLint reported_size = 0;
 	GLint old_bind = 0;
 
@@ -357,8 +348,10 @@ return_failure:
 }
 
 
-inline void kaIndexFree(struct kaIndex* index)
+inline void kaIndexFree(struct kaWindow* window, struct kaIndex* index)
 {
+	(void)window;
+
 	if (index->glptr != 0)
 	{
 		glDeleteBuffers(1, &index->glptr);
@@ -367,8 +360,9 @@ inline void kaIndexFree(struct kaIndex* index)
 }
 
 
-int kaTextureInitImage(const struct jaImage* image, struct kaTexture* out, struct jaStatus* st)
+int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, struct kaTexture* out, struct jaStatus* st)
 {
+	(void)window;
 	GLint old_bind = 0;
 
 	jaStatusSet(st, "kaTextureInitImage", JA_STATUS_SUCCESS, NULL);
@@ -444,7 +438,8 @@ int kaTextureInitImage(const struct jaImage* image, struct kaTexture* out, struc
 }
 
 
-int kaTextureInitFilename(const char* image_filename, struct kaTexture* out, struct jaStatus* st)
+int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, struct kaTexture* out,
+                          struct jaStatus* st)
 {
 	struct jaImage* image = NULL;
 	jaStatusSet(st, "kaTextureInitFilename", JA_STATUS_SUCCESS, NULL);
@@ -452,7 +447,7 @@ int kaTextureInitFilename(const char* image_filename, struct kaTexture* out, str
 	if ((image = jaImageLoad(image_filename, st)) == NULL)
 		return 1;
 
-	if (kaTextureInitImage(image, out, st) != 0)
+	if (kaTextureInitImage(window, image, out, st) != 0)
 	{
 		jaImageDelete(image);
 		return 1;
@@ -463,8 +458,10 @@ int kaTextureInitFilename(const char* image_filename, struct kaTexture* out, str
 }
 
 
-inline void kaTextureFree(struct kaTexture* texture)
+inline void kaTextureFree(struct kaWindow* window, struct kaTexture* texture)
 {
+	(void)window;
+
 	if (texture->glptr != 0)
 	{
 		glDeleteTextures(1, &texture->glptr);
@@ -473,7 +470,8 @@ inline void kaTextureFree(struct kaTexture* texture)
 }
 
 
-inline void kaSetCleanColor(uint8_t r, uint8_t g, uint8_t b)
+inline void kaSetCleanColor(struct kaWindow* window, uint8_t r, uint8_t g, uint8_t b)
 {
+	(void)window;
 	glClearColor((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
 }

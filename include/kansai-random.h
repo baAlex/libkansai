@@ -24,7 +24,11 @@ struct kaXorshift // xorshift*
 	uint64_t a;
 };
 
+
 KA_EXPORT uint64_t kaRandomXorshift(struct kaXorshift* state);
 KA_EXPORT void kaSeedXorshift(struct kaXorshift* state, uint64_t seed);
+
+#define kaRandom(state) kaRandomXorshift(state)
+#define kaSeed(state, seed) kaSeedXorshift(state, seed)
 
 #endif
