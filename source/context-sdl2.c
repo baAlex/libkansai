@@ -112,6 +112,7 @@ int kaContextUpdate(struct jaStatus* st)
 	SDL_Event e = {0};
 	struct kaWindow* window = NULL;
 	struct jaListItem* item = NULL;
+	struct jaStatus callback_st = {0};
 	uint16_t f_keys = 0;
 
 	jaStatusSet(st, "kaContextUpdate", JA_STATUS_SUCCESS, NULL);
@@ -198,8 +199,11 @@ int kaContextUpdate(struct jaStatus* st)
 					return 1;
 			}
 
-			SDL_GL_SwapWindow(window->sdl_window);
-			glClear(GL_COLOR_BUFFER_BIT);
+			if (g_context.focused_window == window || (g_context.frame_no % 4) == 0)
+			{
+				SDL_GL_SwapWindow(window->sdl_window);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
 
 			// Following callbacks after MakeCurrent(), so in case a draw f_keys
 			// is called from one of them, this one is gonna be successfully executed
@@ -224,7 +228,13 @@ int kaContextUpdate(struct jaStatus* st)
 				glViewport(0, 0, width, height);
 
 				if (window->resize_callback != NULL)
-					window->resize_callback(window, width, height, window->user_data);
+				{
+					callback_st.code = JA_STATUS_SUCCESS; // Assume success
+					window->resize_callback(window, width, height, window->user_data, &callback_st);
+
+					if (callback_st.code != JA_STATUS_SUCCESS)
+						goto callback_failure;
+				}
 			}
 		}
 	}
@@ -242,10 +252,24 @@ int kaContextUpdate(struct jaStatus* st)
 
 		if (window->frame_callback != NULL)
 		{
+			callback_st.code = JA_STATUS_SUCCESS; // Assume success
+
+			uint32_t ms_betwen = SDL_GetTicks() - window->last_frame_ms;
+			float delta = (float)ms_betwen / 33.3333f;
+
 			if (g_context.focused_window == window)
-				window->frame_callback(window, g_context.events, window->user_data);
-			else
-				window->frame_callback(window, (struct kaEvents){0}, window->user_data);
+			{
+				window->frame_callback(window, g_context.events, delta, window->user_data, &callback_st);
+				window->last_frame_ms = SDL_GetTicks();
+			}
+			else if ((g_context.frame_no % 4) == 0)
+			{
+				window->frame_callback(window, (struct kaEvents){0}, delta, window->user_data, &callback_st);
+				window->last_frame_ms = SDL_GetTicks();
+			}
+
+			if (callback_st.code != JA_STATUS_SUCCESS)
+				goto callback_failure;
 		}
 
 		// Function keys (if any)
@@ -255,26 +279,38 @@ int kaContextUpdate(struct jaStatus* st)
 
 			for (uint16_t a = f_keys; a != 0; a = a >> 1)
 			{
+				callback_st.code = JA_STATUS_SUCCESS; // Assume success
+
 				if ((a & 0x01) == 1)
-					window->function_callback(window, key_no, window->user_data);
+					window->function_callback(window, key_no, window->user_data, &callback_st);
+
+				if (callback_st.code != JA_STATUS_SUCCESS)
+					goto callback_failure;
 
 				key_no += 1;
 			}
 		}
 	}
 
+	// Bye!
+	g_context.frame_no += 1;
 	return 0;
+
+callback_failure:
+	memcpy(st, &callback_st, sizeof(struct jaStatus));
+	return 1;
 }
 
 
-int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*),
-                   void (*frame_callback)(struct kaWindow*, struct kaEvents, void*),
-                   void (*resize_callback)(struct kaWindow*, int, int, void*),
-                   void (*function_callback)(struct kaWindow*, int, void*),
+int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
+                   void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
+                   void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
+                   void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*),
                    void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st)
 {
 	struct jaListItem* item = NULL;
 	struct kaWindow* window = NULL;
+	struct jaStatus callback_st = {0};
 
 	jaStatusSet(st, "kaWindowCreate", JA_STATUS_SUCCESS, NULL);
 
@@ -399,14 +435,20 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	if (window->init_callback != NULL)
-		window->init_callback(window, window->user_data);
+		window->init_callback(window, window->user_data, &callback_st);
+
+	if (callback_st.code != JA_STATUS_SUCCESS)
+		goto callback_failure;
 
 	SDL_GL_SwapWindow(window->sdl_window);
 
 	// Bye!
 	return 0;
 
-return_failure:
+return_failure: // TODO!
+
+callback_failure:
+	memcpy(st, &callback_st, sizeof(struct jaStatus));
 	return 1;
 }
 

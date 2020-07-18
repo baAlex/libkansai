@@ -31,14 +31,15 @@ enum Filter
 struct kaWindow
 {
 	// ---- Agnostic side ----
-	void (*init_callback)(struct kaWindow*, void*);
-	void (*frame_callback)(struct kaWindow*, struct kaEvents, void*);
-	void (*resize_callback)(struct kaWindow*, int, int, void*);
-	void (*function_callback)(struct kaWindow*, int, void*);
+	void (*init_callback)(struct kaWindow*, void*, struct jaStatus*);
+	void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*);
+	void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*);
+	void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*);
 	void (*close_callback)(struct kaWindow*, void*);
 	void* user_data;
 	bool delete_mark;
 	bool resized_mark;
+	uint32_t last_frame_ms;
 
 	struct jaMatrix4 world;
 	struct jaMatrix4 camera;
@@ -75,6 +76,7 @@ struct kaContext
 	enum Filter cfg_filter;
 	bool cfg_vsync;
 	bool cfg_wireframe;
+	size_t frame_no;
 
 	// ---- SDL2 side ----
 	size_t sdl_references;

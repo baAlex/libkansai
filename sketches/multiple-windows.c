@@ -1,4 +1,5 @@
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -16,28 +17,43 @@ struct WindowData
 	int screenshot_counter;
 
 	bool x_press;
+	float phase;
 };
 
 
-static void sInit(struct kaWindow* window, void* user_data)
+static void sInit(struct kaWindow* window, void* user_data, struct jaStatus* st)
 {
 	(void)window;
 	(void)user_data;
+
+	jaStatusSet(st, "sInit", JA_STATUS_SUCCESS, NULL);
+
 	kaSetCameraMatrix(jaMatrix4Identity(), jaVector3Clean());
 	kaSetWorld(jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 1.0f));
 }
 
 
-static void sFrame(struct kaWindow* window, struct kaEvents e, void* user_data)
+static void sFrame(struct kaWindow* window, struct kaEvents e, float delta, void* user_data, struct jaStatus* st)
 {
 	(void)window;
 	(void)e;
-
 	struct WindowData* data = user_data;
-	kaDrawSprite((struct jaVector3){160.0f, 120.0f, 0.0f}, (struct jaVector3){320.0f, 240.0f, 0.0f});
+
+	jaStatusSet(st, "sFrame", JA_STATUS_SUCCESS, NULL);
 
 	if (data->id == 0)
-		kaDrawSprite((struct jaVector3){160.0f, 120.0f, 0.5f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
+	{
+		kaDrawSprite((struct jaVector3){160.0f, 120.0f, 0.0f}, (struct jaVector3){320.0f, 240.0f, 0.0f});
+	}
+
+	{
+		float x = 160.0f + sinf(data->phase) * 80.0f;
+		float y = 120.0f + sinf(data->phase / 4.0f) * 60.0f;
+
+		kaDrawSprite((struct jaVector3){x, y, 0.5f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
+
+		data->phase += 0.125f * delta;
+	}
 
 	if (e.x != data->x_press)
 	{
@@ -47,18 +63,20 @@ static void sFrame(struct kaWindow* window, struct kaEvents e, void* user_data)
 }
 
 
-static void sResize(struct kaWindow* window, int width, int height, void* user_data)
+static void sResize(struct kaWindow* window, int width, int height, void* user_data, struct jaStatus* st)
 {
 	(void)window;
-
+	(void)st;
 	struct WindowData* data = user_data;
 	printf("Window %i resized to %i, %i\n", data->id, width, height);
 }
 
 
-static void sFunction(struct kaWindow* window, int f, void* user_data)
+static void sFunction(struct kaWindow* window, int f, void* user_data, struct jaStatus* st)
 {
 	struct WindowData* data = user_data;
+
+	jaStatusSet(st, "sFunction", JA_STATUS_SUCCESS, NULL);
 	printf("F%i pressed on window %i\n", f, data->id);
 
 	if (f == 12)
@@ -72,8 +90,8 @@ static void sFunction(struct kaWindow* window, int f, void* user_data)
 		strftime(tstr, 64, "%Y-%m-%e, %H:%M:%S", localtime(&t));
 		sprintf(filename, "%s - %s (%i%i).sgi", NAME, tstr, data->id, data->screenshot_counter);
 
-		kaTakeScreenshot(window, filename, NULL);
 		data->screenshot_counter += 1;
+		kaTakeScreenshot(window, filename, st);
 	}
 }
 

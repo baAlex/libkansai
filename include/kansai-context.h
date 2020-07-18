@@ -86,10 +86,10 @@ KA_EXPORT int kaContextStart(const struct jaConfiguration*, struct jaStatus* st)
 KA_EXPORT void kaContextStop();
 KA_EXPORT int kaContextUpdate(struct jaStatus* st);
 
-KA_EXPORT int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*),
-                             void (*frame_callback)(struct kaWindow*, struct kaEvents, void*),
-                             void (*resize_callback)(struct kaWindow*, int, int, void*),
-                             void (*function_callback)(struct kaWindow*, int, void*),
+KA_EXPORT int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
+                             void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
+                             void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
+                             void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*),
                              void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st);
 KA_EXPORT void kaWindowDelete(struct kaWindow* window);
 

@@ -7,20 +7,23 @@
 #define NAME "Square"
 
 
-static void sInit(struct kaWindow* window, void* user_data)
+static void sInit(struct kaWindow* window, void* user_data, struct jaStatus* st)
 {
 	(void)window;
 	(void)user_data;
+	(void)st;
 	kaSetCameraMatrix(jaMatrix4Identity(), jaVector3Clean());
 	kaSetWorld(jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 1.0f));
 }
 
 
-static void sFrame(struct kaWindow* window, struct kaEvents e, void* user_data)
+static void sFrame(struct kaWindow* window, struct kaEvents e, float delta, void* user_data, struct jaStatus* st)
 {
 	(void)window;
 	(void)e;
+	(void)delta;
 	(void)user_data;
+	(void)st;
 	kaDrawSprite((struct jaVector3){160.0f, 120.0f, 0.0f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
 }
 
