@@ -38,46 +38,34 @@ static inline void sReset(struct WindowData* data)
 static inline void sMedian(struct WindowData* data)
 {
 	uint8_t* pixel = data->image->data;
-
-	uint8_t min = 255;
-	uint8_t max = 0;
 	unsigned a = 0;
 
 	for (size_t i = 0; i < (data->image->size); i++)
 	{
-		if (pixel[i] > max)
-			max = pixel[i];
+		// Median neighbours, kinda
+		a = 0;
+		a += pixel[(i + 1) % data->image->size];
+		a += pixel[(i - 1) % data->image->size];
+		a += pixel[(i + SIZE) % data->image->size];
+		a += pixel[(i - SIZE) % data->image->size];
+		a = a >> 2;
 
-		if (pixel[i] < min)
-			min = pixel[i];
+		// Median with the pixel itself
+		a += pixel[i];
+		a = a >> 1;
 
-		if (pixel[i] != ((min + max) >> 1))
-		{
-			// Median neighbours, kinda
-			a = 0;
-			a += pixel[(i + 1) % data->image->size];
-			a += pixel[(i - 1) % data->image->size];
-			a += pixel[(i + SIZE) % data->image->size];
-			a += pixel[(i - SIZE) % data->image->size];
-			a = a >> 2;
+		// Mix with noise
+		a = a << 1;
 
-			// Median with the pixel itself
-			a += pixel[i];
-			a = a >> 1;
+		if (a > 4)
+			a = a - (unsigned)(kaRandom(&data->rng) % 4);
+		else
+			a = a + (unsigned)(kaRandom(&data->rng) % 4);
 
-			// Mix with noise
-			a = a << 1;
+		a = a >> 1;
 
-			if (a > 4)
-				a = a - (unsigned)(kaRandom(&data->rng) % 4);
-			else if (a < 255 - 4)
-				a = a + (unsigned)(kaRandom(&data->rng) % 4);
-
-			a = a >> 1;
-
-			// Enjoy!
-			pixel[i] = (uint8_t)(a % 255);
-		}
+		// Enjoy!
+		pixel[i] = (uint8_t)(a % 255);
 	}
 }
 
@@ -96,7 +84,6 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 		st->code = JA_STATUS_ERROR;
 
 	sReset(data);
-	sMedian(data);
 
 	// Upload it as a texture
 	if (kaTextureInitImage(w, data->image, KA_FILTER_BILINEAR, &data->texture, st) != 0)
