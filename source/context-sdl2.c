@@ -85,7 +85,6 @@ int kaContextStart(const struct jaConfiguration* cfg, struct jaStatus* st)
 		}
 
 		g_context.cfg_vsync = true;
-		g_context.cfg_filter = FILTER_NONE;
 	}
 
 	g_context.sdl_references += 1;
@@ -357,6 +356,8 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	window->close_callback = close_callback;
 	window->user_data = user_data;
 
+	window->cfg_default_filter = KA_FILTER_NONE;
+
 	// 2 - SDL2 objects
 	if ((window->sdl_window = SDL_CreateWindow(caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH,
 	                                           WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE)) == NULL)
@@ -452,7 +453,7 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		if (kaIndexInit(window, raw_index, 6, &window->default_index, st) != 0 ||
 		    kaVerticesInit(window, raw_vertices, 4, &window->default_vertices, st) != 0 ||
 		    kaProgramInit(window, vertex_code, fragment_code, &window->default_program, st) != 0 ||
-		    kaTextureInitImage(window, &image, &window->default_texture, st) != 0)
+		    kaTextureInitImage(window, &image, KA_FILTER_DEFAULT, &window->default_texture, st) != 0)
 			goto return_failure;
 
 		kaSetProgram(window, &window->default_program);

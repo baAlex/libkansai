@@ -258,8 +258,8 @@ int kaVerticesInit(struct kaWindow* window, const struct kaVertex* data, uint16_
 
 	jaStatusSet(st, "kaVerticesInit", JA_STATUS_SUCCESS, NULL);
 
-	glGenBuffers(1, &out->glptr);
 	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &old_bind);
+	glGenBuffers(1, &out->glptr);
 	glBindBuffer(GL_ARRAY_BUFFER, out->glptr); // Before ask if is!
 
 	if (glIsBuffer(out->glptr) == GL_FALSE)
@@ -313,8 +313,8 @@ int kaIndexInit(struct kaWindow* window, const uint16_t* data, size_t length, st
 
 	jaStatusSet(st, "kaIndexInit", JA_STATUS_SUCCESS, NULL);
 
-	glGenBuffers(1, &out->glptr);
 	glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &old_bind);
+	glGenBuffers(1, &out->glptr);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, out->glptr); // Before ask if is!
 
 	if (glIsBuffer(out->glptr) == GL_FALSE)
@@ -360,7 +360,8 @@ inline void kaIndexFree(struct kaWindow* window, struct kaIndex* index)
 }
 
 
-int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, struct kaTexture* out, struct jaStatus* st)
+int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enum kaTextureFilter filter,
+                       struct kaTexture* out, struct jaStatus* st)
 {
 	(void)window;
 	GLint old_bind = 0;
@@ -373,8 +374,8 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, str
 		return 1;
 	}
 
-	glGenTextures(1, &out->glptr);
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_bind);
+	glGenTextures(1, &out->glptr);
 	glBindTexture(GL_TEXTURE_2D, out->glptr); // Before ask if is!
 
 	if (glIsTexture(out->glptr) == GL_FALSE)
@@ -383,30 +384,34 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, str
 		return 1;
 	}
 
-	switch (g_context.cfg_filter)
+	if (filter == KA_FILTER_DEFAULT)
+		filter = window->cfg_default_filter;
+
+	out->filter = filter;
+
+	switch (filter)
 	{
-	case FILTER_BILINEAR:
+	case KA_FILTER_BILINEAR:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		break;
-	case FILTER_TRILINEAR:
+	case KA_FILTER_TRILINEAR:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		break;
-
-	case FILTER_PIXEL_BILINEAR:
+	case KA_FILTER_PIXEL_BILINEAR:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		break;
-	case FILTER_PIXEL_TRILINEAR:
+	case KA_FILTER_PIXEL_TRILINEAR:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		break;
-
-	case FILTER_NONE:
+	case KA_FILTER_NONE:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		break;
+	default: break;
 	}
 
 	switch (image->channels)
@@ -430,7 +435,7 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, str
 	default: break;
 	}
 
-	if (g_context.cfg_filter != FILTER_NONE)
+	if (filter != KA_FILTER_NONE)
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, (GLuint)old_bind);
@@ -438,8 +443,8 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, str
 }
 
 
-int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, struct kaTexture* out,
-                          struct jaStatus* st)
+int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, enum kaTextureFilter filter,
+                          struct kaTexture* out, struct jaStatus* st)
 {
 	struct jaImage* image = NULL;
 	jaStatusSet(st, "kaTextureInitFilename", JA_STATUS_SUCCESS, NULL);
@@ -447,7 +452,7 @@ int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, s
 	if ((image = jaImageLoad(image_filename, st)) == NULL)
 		return 1;
 
-	if (kaTextureInitImage(window, image, out, st) != 0)
+	if (kaTextureInitImage(window, image, filter, out, st) != 0)
 	{
 		jaImageDelete(image);
 		return 1;
@@ -455,6 +460,43 @@ int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, s
 
 	jaImageDelete(image);
 	return 0;
+}
+
+
+void kaTextureUpdate(struct kaWindow* window, const struct jaImage* image, size_t x, size_t y, size_t width,
+                     size_t height, struct kaTexture* out)
+{
+	(void)window;
+	GLint old_bind = 0;
+
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_bind);
+	glBindTexture(GL_TEXTURE_2D, out->glptr);
+
+	switch (image->channels)
+	{
+	case 1:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, (GLsizei)x, (GLsizei)y, (GLsizei)width, (GLsizei)height, GL_LUMINANCE,
+		                GL_UNSIGNED_BYTE, image->data);
+		break;
+	case 2:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, (GLsizei)x, (GLsizei)y, (GLsizei)width, (GLsizei)height, GL_LUMINANCE_ALPHA,
+		                GL_UNSIGNED_BYTE, image->data);
+		break;
+	case 3:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, (GLsizei)x, (GLsizei)y, (GLsizei)width, (GLsizei)height, GL_RGB,
+		                GL_UNSIGNED_BYTE, image->data);
+		break;
+	case 4:
+		glTexSubImage2D(GL_TEXTURE_2D, 0, (GLsizei)x, (GLsizei)y, (GLsizei)width, (GLsizei)height, GL_RGBA,
+		                GL_UNSIGNED_BYTE, image->data);
+		break;
+	default: break;
+	}
+
+	if (out->filter != KA_FILTER_NONE)
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, (GLuint)old_bind);
 }
 
 

@@ -19,15 +19,6 @@
 #define ATTRIBUTE_COLOUR 11
 #define ATTRIBUTE_UV 12
 
-enum Filter
-{
-	FILTER_BILINEAR,
-	FILTER_TRILINEAR,
-	FILTER_PIXEL_BILINEAR,
-	FILTER_PIXEL_TRILINEAR,
-	FILTER_NONE
-};
-
 struct kaWindow
 {
 	// ---- Agnostic side ----
@@ -41,6 +32,8 @@ struct kaWindow
 	bool delete_mark;
 	bool resized_mark;
 	uint32_t last_frame_ms;
+
+	enum kaTextureFilter cfg_default_filter;
 
 	struct jaMatrix4 world;
 	struct jaMatrix4 camera;
@@ -77,7 +70,6 @@ struct kaWindow
 struct kaContext
 {
 	// ---- Agnostic side ----
-	enum Filter cfg_filter; // TODO, move to window
 	bool cfg_vsync;
 	size_t frame_no;
 

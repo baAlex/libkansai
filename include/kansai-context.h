@@ -73,35 +73,32 @@ struct kaIndex
 	size_t length; // In elements
 };
 
+enum kaTextureFilter
+{
+	KA_FILTER_DEFAULT = -1,
+	KA_FILTER_BILINEAR,
+	KA_FILTER_TRILINEAR,
+	KA_FILTER_PIXEL_BILINEAR,
+	KA_FILTER_PIXEL_TRILINEAR,
+	KA_FILTER_NONE
+};
+
 struct kaTexture
 {
 	unsigned int glptr;
+	enum kaTextureFilter filter;
 };
 
 
-/// Starts context. An abstraction over SDL2 and OpenGL. An monolithic, single threaded object that
-/// requires initialization. Call it before any other Kansai function.
-/// @return A value of 0 if succeed
 KA_EXPORT int kaContextStart(const struct jaConfiguration*, struct jaStatus* st);
-
-/// Stops context. Be sure of call it before the program exits.
 KA_EXPORT void kaContextStop();
-
-/// Updates one frame of all windows created in the context. Does a buffer flip, verifies new
-/// input, cleans the old buffer and call required windows callbacks.
-/// @return A value of 0 if succeed. A value of 1 if there is no window attached to the context
-/// and thus no need of call this function for new frames. A value of 2 if there is an error.
 KA_EXPORT int kaContextUpdate(struct jaStatus* st);
 
-/// Creates a window. Is possible to create multiple of them.
-/// @return A value of 0 if succeed.
 KA_EXPORT int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
                              void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
                              void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
                              void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*),
                              void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st);
-
-/// Deletes window. You can avoid this function as long you call 'ContextStop' at the end of the day.
 KA_EXPORT void kaWindowDelete(struct kaWindow* window);
 
 //
@@ -118,10 +115,12 @@ KA_EXPORT int kaIndexInit(struct kaWindow* window, const uint16_t* data, size_t 
                           struct jaStatus* st);
 KA_EXPORT void kaIndexFree(struct kaWindow* window, struct kaIndex* index);
 
-KA_EXPORT int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, struct kaTexture* out,
-                                 struct jaStatus* st);
-KA_EXPORT int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, struct kaTexture* out,
-                                    struct jaStatus* st);
+KA_EXPORT int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enum kaTextureFilter filter,
+                                 struct kaTexture* out, struct jaStatus* st);
+KA_EXPORT int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, enum kaTextureFilter filter,
+                                    struct kaTexture* out, struct jaStatus* st);
+KA_EXPORT void kaTextureUpdate(struct kaWindow* window, const struct jaImage*, size_t x, size_t y, size_t width,
+                               size_t height, struct kaTexture* out);
 KA_EXPORT void kaTextureFree(struct kaWindow* window, struct kaTexture* texture);
 
 //

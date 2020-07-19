@@ -97,4 +97,7 @@ if (KA_BUILD_SKETCHES)
 
 	add_executable("multiple-windows" "./sketches/multiple-windows.c")
 	target_link_libraries("multiple-windows" "kansai-static")
+
+	add_executable("noise" "./sketches/noise.c")
+	target_link_libraries("noise" "kansai-static")
 endif()
