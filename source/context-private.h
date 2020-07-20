@@ -32,6 +32,7 @@ struct kaWindow
 	bool delete_mark;
 	bool resized_mark;
 	uint32_t last_frame_ms;
+	bool is_fullscreen;
 
 	enum kaTextureFilter cfg_default_filter;
 

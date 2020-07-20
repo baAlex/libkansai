@@ -142,4 +142,6 @@ KA_EXPORT void kaSetCleanColor(struct kaWindow* window, uint8_t r, uint8_t g, ui
 KA_EXPORT size_t kaGetTime(struct kaWindow* window);
 KA_EXPORT size_t kaGetFrame(struct kaWindow* window);
 
+KA_EXPORT void kaSwitchFullscreen(struct kaWindow* window);
+
 #endif

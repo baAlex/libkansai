@@ -81,7 +81,10 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 
 	// Create an image
 	if ((data->image = jaImageCreate(JA_IMAGE_U8, SIZE, SIZE, 1)) == NULL)
+	{
 		st->code = JA_STATUS_ERROR;
+		return;
+	}
 
 	sReset(data);
 

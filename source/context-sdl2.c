@@ -411,7 +411,7 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	// 5 - Create some default OpenGL objects
+	// 5 - Create some default OpenGL objects (and set default values)
 	{
 		uint16_t raw_index[] = {2, 1, 0, 3, 2, 0};
 		struct kaVertex raw_vertices[] = {
@@ -459,9 +459,12 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		kaSetProgram(window, &window->default_program);
 		kaSetVertices(window, &window->default_vertices);
 		kaSetTexture(window, 0, &window->default_texture);
+
+		kaSetCameraMatrix(window, jaMatrix4Identity(), jaVector3Clean());
+		kaSetWorld(window, jaMatrix4Orthographic(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 2.0f));
 	}
 
-	// 6 - First callback
+	// 6 - First callbacks
 	{
 		struct jaStatus callback_st = {0};
 		callback_st.code = JA_STATUS_SUCCESS; // Assume success
@@ -470,6 +473,15 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 
 		if (window->init_callback != NULL)
 			window->init_callback(window, window->user_data, &callback_st);
+
+		if (callback_st.code != JA_STATUS_SUCCESS)
+		{
+			memcpy(st, &callback_st, sizeof(struct jaStatus));
+			goto return_failure;
+		}
+
+		if (window->resize_callback != NULL)
+			window->resize_callback(window, WINDOW_WIDTH, WINDOW_HEIGHT, window->user_data, &callback_st);
 
 		if (callback_st.code != JA_STATUS_SUCCESS)
 		{
@@ -568,4 +580,19 @@ inline size_t kaGetFrame(struct kaWindow* window)
 {
 	(void)window;
 	return (size_t)g_context.frame_no;
+}
+
+
+void kaSwitchFullscreen(struct kaWindow* window)
+{
+	if (window->is_fullscreen == false)
+	{
+		SDL_SetWindowFullscreen(window->sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		window->is_fullscreen = true;
+	}
+	else
+	{
+		SDL_SetWindowFullscreen(window->sdl_window, 0);
+		window->is_fullscreen = false;
+	}
 }
