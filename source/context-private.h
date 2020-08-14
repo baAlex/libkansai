@@ -37,6 +37,7 @@ struct kaWindow
 	enum kaTextureFilter cfg_default_filter;
 
 	struct jaMatrix4 world;
+	struct jaMatrix4 local;
 	struct jaMatrix4 camera;
 	struct jaVector3 camera_position;
 
@@ -46,10 +47,8 @@ struct kaWindow
 
 	struct
 	{
-		GLint local_position;
-		GLint local_scale;
-
 		GLint world;
+		GLint local;
 		GLint camera;
 		GLint camera_position;
 		GLint texture[8];

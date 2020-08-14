@@ -83,10 +83,18 @@ enum kaTextureFilter
 	KA_FILTER_NONE
 };
 
+enum kaTextureWrap
+{
+	KA_REPEAT,
+	KA_CLAMP,
+	KA_MIRRORED_REPEAT
+};
+
 struct kaTexture
 {
 	unsigned int glptr;
 	enum kaTextureFilter filter;
+	enum kaTextureWrap wrap;
 };
 
 
@@ -115,10 +123,10 @@ KA_EXPORT int kaIndexInit(struct kaWindow* window, const uint16_t* data, size_t 
                           struct jaStatus* st);
 KA_EXPORT void kaIndexFree(struct kaWindow* window, struct kaIndex* index);
 
-KA_EXPORT int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enum kaTextureFilter filter,
-                                 struct kaTexture* out, struct jaStatus* st);
-KA_EXPORT int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, enum kaTextureFilter filter,
-                                    struct kaTexture* out, struct jaStatus* st);
+KA_EXPORT int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enum kaTextureFilter,
+                                 enum kaTextureWrap, struct kaTexture* out, struct jaStatus* st);
+KA_EXPORT int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, enum kaTextureFilter,
+                                    enum kaTextureWrap, struct kaTexture* out, struct jaStatus* st);
 KA_EXPORT void kaTextureUpdate(struct kaWindow* window, const struct jaImage*, size_t x, size_t y, size_t width,
                                size_t height, struct kaTexture* out);
 KA_EXPORT void kaTextureFree(struct kaWindow* window, struct kaTexture* texture);
@@ -130,11 +138,12 @@ KA_EXPORT void kaSetVertices(struct kaWindow* window, const struct kaVertices* v
 KA_EXPORT void kaSetTexture(struct kaWindow* window, int unit, const struct kaTexture* texture);
 
 KA_EXPORT void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix);
+KA_EXPORT void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix);
 KA_EXPORT void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, struct jaVector3 origin);
 KA_EXPORT void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, struct jaVector3 origin);
 
 KA_EXPORT void kaDraw(struct kaWindow* window, const struct kaIndex* index);
-KA_EXPORT void kaDrawSprite(struct kaWindow* window, struct jaVector3 position, struct jaVector3 scale);
+KA_EXPORT void kaDrawDefault(struct kaWindow* window);
 
 KA_EXPORT struct jaImage* kaTakeScreenshot(struct kaWindow* window, struct jaStatus* st);
 

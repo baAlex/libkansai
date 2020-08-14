@@ -75,9 +75,7 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	struct WindowData* data = user_data;
 
 	kaSeed(&data->rng, 0);
-
-	kaSetCameraMatrix(w, jaMatrix4Identity(), jaVector3Clean());
-	kaSetWorld(w, jaMatrix4Orthographic(0.0f, 256.0f, 0.0f, 256.0f, 0.0f, 2.0f));
+	kaSetCameraMatrix(w, jaMatrix4Orthographic(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f), jaVector3Clean());
 
 	// Create an image
 	if ((data->image = jaImageCreate(JA_IMAGE_U8, SIZE, SIZE, 1)) == NULL)
@@ -89,7 +87,7 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	sReset(data);
 
 	// Upload it as a texture
-	if (kaTextureInitImage(w, data->image, KA_FILTER_BILINEAR, &data->texture, st) != 0)
+	if (kaTextureInitImage(w, data->image, KA_FILTER_BILINEAR, KA_CLAMP, &data->texture, st) != 0)
 		return;
 
 	kaSetTexture(w, 0, &data->texture);
@@ -98,13 +96,12 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	{
 		const char* vertex_code =
 		    "#version 100\n"
-		    "attribute vec3 vertex_position; attribute vec2 vertex_uv;"
-		    "uniform mat4 world; uniform mat4 camera; uniform vec3 camera_position;"
-		    "uniform vec3 local_position; uniform vec3 local_scale;"
-		    "varying vec2 uv;"
+		    "attribute vec3 vertex_position; attribute vec4 vertex_colour; attribute vec2 vertex_uv;"
+		    "uniform mat4 world; uniform mat4 local; uniform mat4 camera;"
+		    "varying vec4 colour; varying vec2 uv;"
 
-		    "void main() { uv = vertex_uv;"
-		    "gl_Position = world * camera * vec4(local_position + (vertex_position * local_scale), 1.0); }";
+		    "void main() { colour = vertex_colour; uv = vertex_uv;"
+		    "gl_Position = world * local * camera * vec4(vertex_position, 1.0); }";
 
 		const char* fragment_code =
 		    "#version 100\n"
@@ -150,7 +147,7 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 		data->previous_median = current;
 	}
 
-	kaDrawSprite(w, (struct jaVector3){128.0f, 128.0f, 1.0f}, (struct jaVector3){256.0f, 256.0f, 0.0f});
+	kaDrawDefault(w);
 }
 
 

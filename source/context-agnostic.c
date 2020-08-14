@@ -37,10 +37,8 @@ void kaSetProgram(struct kaWindow* window, const struct kaProgram* program)
 	{
 		window->current_program = program;
 
-		window->uniform.local_position = glGetUniformLocation(program->glptr, "local_position");
-		window->uniform.local_scale = glGetUniformLocation(program->glptr, "local_scale");
-
 		window->uniform.world = glGetUniformLocation(program->glptr, "world");
+		window->uniform.local = glGetUniformLocation(program->glptr, "local");
 		window->uniform.camera = glGetUniformLocation(program->glptr, "camera");
 		window->uniform.camera_position = glGetUniformLocation(program->glptr, "camera_position");
 
@@ -56,6 +54,7 @@ void kaSetProgram(struct kaWindow* window, const struct kaProgram* program)
 		glUseProgram(program->glptr);
 
 		glUniformMatrix4fv(window->uniform.world, 1, GL_FALSE, &window->world.e[0][0]);
+		glUniformMatrix4fv(window->uniform.local, 1, GL_FALSE, &window->local.e[0][0]);
 		glUniformMatrix4fv(window->uniform.camera, 1, GL_FALSE, &window->camera.e[0][0]);
 		glUniform3fv(window->uniform.camera_position, 1, (float*)&window->camera_position);
 		glUniform1i(window->uniform.texture[0], 0);
@@ -105,6 +104,15 @@ inline void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix)
 }
 
 
+void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
+{
+	memcpy(&window->local, &matrix, sizeof(struct jaMatrix4));
+
+	if (window->current_program != NULL)
+		glUniformMatrix4fv(window->uniform.local, 1, GL_FALSE, &window->local.e[0][0]);
+}
+
+
 inline void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, struct jaVector3 origin)
 {
 	window->camera_position = origin;
@@ -139,18 +147,10 @@ inline void kaDraw(struct kaWindow* window, const struct kaIndex* index)
 }
 
 
-inline void kaDrawSprite(struct kaWindow* window, struct jaVector3 position, struct jaVector3 scale)
+inline void kaDrawDefault(struct kaWindow* window)
 {
-	// Incredible inefficient!
-	const struct kaVertices* prev_vertices = window->current_vertices;
-	kaSetVertices(window, &window->default_vertices);
-
-	glUniform3fv(window->uniform.local_position, 1, (float*)&position);
-	glUniform3fv(window->uniform.local_scale, 1, (float*)&scale);
-	kaDraw(window, &window->default_index);
-
-	if (prev_vertices != &window->default_vertices)
-		kaSetVertices(window, prev_vertices);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, window->default_index.glptr);
+	glDrawElements(GL_TRIANGLES, (GLsizei)window->default_index.length, GL_UNSIGNED_SHORT, NULL);
 }
 
 
@@ -361,7 +361,7 @@ inline void kaIndexFree(struct kaWindow* window, struct kaIndex* index)
 
 
 int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enum kaTextureFilter filter,
-                       struct kaTexture* out, struct jaStatus* st)
+                       enum kaTextureWrap wrap, struct kaTexture* out, struct jaStatus* st)
 {
 	(void)window;
 	GLint old_bind = 0;
@@ -388,6 +388,7 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enu
 		filter = window->cfg_default_filter;
 
 	out->filter = filter;
+	out->wrap = wrap;
 
 	switch (filter)
 	{
@@ -412,6 +413,19 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enu
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		break;
 	default: break;
+	}
+
+	switch (wrap)
+	{
+	case KA_CLAMP:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		break;
+	case KA_MIRRORED_REPEAT:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		break;
+	default: break; // KA_REPEAT is the default value
 	}
 
 	switch (image->channels)
@@ -444,7 +458,7 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enu
 
 
 int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, enum kaTextureFilter filter,
-                          struct kaTexture* out, struct jaStatus* st)
+                          enum kaTextureWrap wrap, struct kaTexture* out, struct jaStatus* st)
 {
 	struct jaImage* image = NULL;
 	jaStatusSet(st, "kaTextureInitFilename", JA_STATUS_SUCCESS, NULL);
@@ -452,7 +466,7 @@ int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, e
 	if ((image = jaImageLoad(image_filename, st)) == NULL)
 		return 1;
 
-	if (kaTextureInitImage(window, image, filter, out, st) != 0)
+	if (kaTextureInitImage(window, image, filter, wrap, out, st) != 0)
 	{
 		jaImageDelete(image);
 		return 1;

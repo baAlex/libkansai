@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "japan-utilities.h"
 #include "japan-vector.h"
 #include "kansai-context.h"
 #include "kansai-random.h"
@@ -26,8 +27,9 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	data->position = jaVector2Set(160.0f, 120.0f);
 	kaSeed(&data->rng, 0);
 
-	kaSetCameraMatrix(w, jaMatrix4Identity(), jaVector3Clean());
-	kaSetWorld(w, jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 2.0f));
+	kaSetWorld(w, jaMatrix4Identity());
+	kaSetLocal(w, jaMatrix4RotateZ(jaMatrix4Identity(), jaDegToRad(45.0f)));
+	kaSetCameraMatrix(w, jaMatrix4Orthographic(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f), jaVector3Clean());
 }
 
 
@@ -54,8 +56,7 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 		}
 	}
 
-	kaDrawSprite(w, (struct jaVector3){data->position.x, data->position.y, 1.0f},
-	             (struct jaVector3){64.0f, 64.0f, 0.0f});
+	kaDrawDefault(w);
 }
 
 

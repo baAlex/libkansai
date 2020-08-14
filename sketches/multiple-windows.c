@@ -23,28 +23,30 @@ struct WindowData
 static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 {
 	(void)user_data;
-
+	(void)w;
 	jaStatusSet(st, "sInit", JA_STATUS_SUCCESS, NULL);
-
-	kaSetCameraMatrix(w, jaMatrix4Identity(), jaVector3Clean());
-	kaSetWorld(w, jaMatrix4Orthographic(0.0f, 320.0f, 0.0f, 240.0f, 0.0f, 2.0f));
 }
 
 
 static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* user_data, struct jaStatus* st)
 {
 	struct WindowData* data = user_data;
-
 	jaStatusSet(st, "sFrame", JA_STATUS_SUCCESS, NULL);
 
-	float x = 160.0f + sinf(data->phase) * 80.0f;
-	float y = 120.0f + sinf(data->phase / 4.0f) * 60.0f;
+	struct jaVector3 pos;
+	pos.x = sinf(data->phase);
+	pos.y = sinf(data->phase / 4.0f);
 
-	kaDrawSprite(w, (struct jaVector3){x, y, 1.0f}, (struct jaVector3){64.0f, 64.0f, 0.0f});
+	kaSetLocal(w, jaMatrix4Translate(pos));
+	kaDrawDefault(w);
+
 	data->phase += 0.125f * delta;
 
 	if (data->id == 0)
-		kaDrawSprite(w, (struct jaVector3){160.0f, 120.0f, 1.0f}, (struct jaVector3){320.0f, 240.0f, 0.0f});
+	{
+		kaSetLocal(w, jaMatrix4Identity());
+		kaDrawDefault(w);
+	}
 
 	if (e.x != data->x_press)
 	{

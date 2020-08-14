@@ -423,12 +423,11 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		const char* vertex_code =
 		    "#version 100\n"
 		    "attribute vec3 vertex_position; attribute vec4 vertex_colour; attribute vec2 vertex_uv;"
-		    "uniform mat4 world; uniform mat4 camera; uniform vec3 camera_position;"
-		    "uniform vec3 local_position; uniform vec3 local_scale;"
+		    "uniform mat4 world; uniform mat4 local; uniform mat4 camera;"
 		    "varying vec4 colour; varying vec2 uv;"
 
 		    "void main() { colour = vertex_colour; uv = vertex_uv;"
-		    "gl_Position = world * camera * vec4(local_position + (vertex_position * local_scale), 1.0); }";
+		    "gl_Position = world * local * camera * vec4(vertex_position, 1.0); }";
 
 		const char* fragment_code =
 		    "#version 100\n"
@@ -453,15 +452,16 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		if (kaIndexInit(window, raw_index, 6, &window->default_index, st) != 0 ||
 		    kaVerticesInit(window, raw_vertices, 4, &window->default_vertices, st) != 0 ||
 		    kaProgramInit(window, vertex_code, fragment_code, &window->default_program, st) != 0 ||
-		    kaTextureInitImage(window, &image, KA_FILTER_DEFAULT, &window->default_texture, st) != 0)
+		    kaTextureInitImage(window, &image, KA_FILTER_DEFAULT, KA_REPEAT, &window->default_texture, st) != 0)
 			goto return_failure;
 
 		kaSetProgram(window, &window->default_program);
 		kaSetVertices(window, &window->default_vertices);
 		kaSetTexture(window, 0, &window->default_texture);
 
-		kaSetCameraMatrix(window, jaMatrix4Identity(), jaVector3Clean());
-		kaSetWorld(window, jaMatrix4Orthographic(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 2.0f));
+		kaSetWorld(window, jaMatrix4Identity());
+		kaSetLocal(window, jaMatrix4Identity());
+		kaSetCameraMatrix(window, jaMatrix4Orthographic(-1.0f, +1.0f, -1.0f, +1.0f, 0.0f, 2.0f), jaVector3Clean());
 	}
 
 	// 6 - First callbacks
