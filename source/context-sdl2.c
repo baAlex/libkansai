@@ -136,12 +136,12 @@ int kaContextUpdate(struct jaStatus* st)
 			{
 				switch (e.key.keysym.scancode)
 				{
-				case SDL_SCANCODE_Z: g_context.events.a = true; break;
-				case SDL_SCANCODE_Y: g_context.events.b = true; break;
-				case SDL_SCANCODE_A: g_context.events.x = true; break;
-				case SDL_SCANCODE_S: g_context.events.y = true; break;
+				case SDL_SCANCODE_RETURN: g_context.events.a = true; break;
+				case SDL_SCANCODE_BACKSPACE: g_context.events.b = true; break;
+				case SDL_SCANCODE_Z: g_context.events.x = true; break;
+				case SDL_SCANCODE_X: g_context.events.y = true; break;
 
-				case SDL_SCANCODE_RETURN: g_context.events.start = true; break;
+				case SDL_SCANCODE_ESCAPE: g_context.events.start = true; break;
 				case SDL_SCANCODE_SPACE: g_context.events.select = true; break;
 
 				case SDL_SCANCODE_UP: g_context.events.pad_u = true; break;
@@ -156,12 +156,12 @@ int kaContextUpdate(struct jaStatus* st)
 			{
 				switch (e.key.keysym.scancode)
 				{
-				case SDL_SCANCODE_Z: g_context.events.a = false; break;
-				case SDL_SCANCODE_Y: g_context.events.b = false; break;
-				case SDL_SCANCODE_A: g_context.events.x = false; break;
-				case SDL_SCANCODE_S: g_context.events.y = false; break;
+				case SDL_SCANCODE_RETURN: g_context.events.a = false; break;
+				case SDL_SCANCODE_BACKSPACE: g_context.events.b = false; break;
+				case SDL_SCANCODE_Z: g_context.events.x = false; break;
+				case SDL_SCANCODE_X: g_context.events.y = false; break;
 
-				case SDL_SCANCODE_RETURN: g_context.events.start = false; break;
+				case SDL_SCANCODE_ESCAPE: g_context.events.start = false; break;
 				case SDL_SCANCODE_SPACE: g_context.events.select = false; break;
 
 				case SDL_SCANCODE_UP: g_context.events.pad_u = false; break;
