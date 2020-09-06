@@ -65,7 +65,7 @@ int main()
 	struct jaStatus st = {0};
 	struct WindowData data = {0};
 
-	if (kaContextStart(NULL, &st) != 0)
+	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
 	if (kaWindowCreate(NAME, sInit, sFrame, NULL, NULL, NULL, &data, &st) != 0)

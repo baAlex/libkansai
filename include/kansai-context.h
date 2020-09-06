@@ -17,10 +17,8 @@
 	#define KA_EXPORT // Whitespace
 #endif
 
-#include <stdbool.h>
 #include <stdint.h>
 
-#include "japan-configuration.h"
 #include "japan-image.h"
 #include "japan-matrix.h"
 #include "japan-status.h"
@@ -30,21 +28,18 @@ struct kaWindow;
 
 struct kaEvents
 {
-	struct
-	{
-		bool a : 1; // XBOX order
-		bool b : 1;
-		bool x : 1;
-		bool y : 1;
+	uint8_t a : 1;
+	uint8_t b : 1;
+	uint8_t x : 1;
+	uint8_t y : 1;
 
-		bool select : 1; // SNES order
-		bool start : 1;
+	uint8_t select : 1;
+	uint8_t start : 1;
 
-		bool pad_u : 1;
-		bool pad_d : 1;
-		bool pad_l : 1;
-		bool pad_r : 1;
-	};
+	uint8_t pad_u : 1;
+	uint8_t pad_d : 1;
+	uint8_t pad_l : 1;
+	uint8_t pad_r : 1;
 
 	struct jaVector2 pad;
 };
@@ -75,7 +70,6 @@ struct kaIndex
 
 enum kaTextureFilter
 {
-	KA_FILTER_DEFAULT = -1,
 	KA_FILTER_BILINEAR,
 	KA_FILTER_TRILINEAR,
 	KA_FILTER_PIXEL_BILINEAR,
@@ -98,7 +92,7 @@ struct kaTexture
 };
 
 
-KA_EXPORT int kaContextStart(const struct jaConfiguration*, struct jaStatus* st);
+KA_EXPORT int kaContextStart(struct jaStatus* st);
 KA_EXPORT void kaContextStop();
 KA_EXPORT int kaContextUpdate(struct jaStatus* st);
 

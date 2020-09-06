@@ -33,7 +33,10 @@ SOFTWARE.
 
 void kaSetProgram(struct kaWindow* window, const struct kaProgram* program)
 {
-	if (program != NULL && program != window->current_program)
+	if (window == NULL || program == NULL)
+		return;
+
+	if (program != window->current_program)
 	{
 		window->current_program = program;
 
@@ -71,7 +74,10 @@ void kaSetProgram(struct kaWindow* window, const struct kaProgram* program)
 
 inline void kaSetVertices(struct kaWindow* window, const struct kaVertices* vertices)
 {
-	if (vertices != NULL && vertices != window->current_vertices)
+	if (window == NULL || vertices == NULL)
+		return;
+
+	if (vertices != window->current_vertices)
 	{
 		window->current_vertices = vertices;
 
@@ -85,7 +91,10 @@ inline void kaSetVertices(struct kaWindow* window, const struct kaVertices* vert
 
 inline void kaSetTexture(struct kaWindow* window, int unit, const struct kaTexture* texture)
 {
-	if (texture != NULL && texture != window->current_texture)
+	if (window == NULL || texture == NULL)
+		return;
+
+	if (texture != window->current_texture)
 	{
 		window->current_texture = texture;
 
@@ -97,6 +106,9 @@ inline void kaSetTexture(struct kaWindow* window, int unit, const struct kaTextu
 
 inline void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix)
 {
+	if (window == NULL)
+		return;
+
 	memcpy(&window->world, &matrix, sizeof(struct jaMatrix4));
 
 	if (window->current_program != NULL)
@@ -104,8 +116,11 @@ inline void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix)
 }
 
 
-void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
+inline void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
 {
+	if (window == NULL)
+		return;
+
 	memcpy(&window->local, &matrix, sizeof(struct jaMatrix4));
 
 	if (window->current_program != NULL)
@@ -115,6 +130,9 @@ void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
 
 inline void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, struct jaVector3 origin)
 {
+	if (window == NULL)
+		return;
+
 	window->camera_position = origin;
 	window->camera = jaMatrix4LookAt(origin, target, (struct jaVector3){0.0f, 0.0f, 1.0f});
 
@@ -128,6 +146,9 @@ inline void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, 
 
 inline void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, struct jaVector3 origin)
 {
+	if (window == NULL)
+		return;
+
 	window->camera_position = origin;
 	window->camera = matrix;
 
@@ -142,15 +163,22 @@ inline void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, 
 inline void kaDraw(struct kaWindow* window, const struct kaIndex* index)
 {
 	(void)window;
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index->glptr);
-	glDrawElements(GL_TRIANGLES, (GLsizei)index->length, GL_UNSIGNED_SHORT, NULL);
+
+	if (index != NULL)
+	{
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index->glptr);
+		glDrawElements(GL_TRIANGLES, (GLsizei)index->length, GL_UNSIGNED_SHORT, NULL);
+	}
 }
 
 
 inline void kaDrawDefault(struct kaWindow* window)
 {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, window->default_index.glptr);
-	glDrawElements(GL_TRIANGLES, (GLsizei)window->default_index.length, GL_UNSIGNED_SHORT, NULL);
+	if (window != NULL)
+	{
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, window->default_index.glptr);
+		glDrawElements(GL_TRIANGLES, (GLsizei)window->default_index.length, GL_UNSIGNED_SHORT, NULL);
+	}
 }
 
 
@@ -181,6 +209,12 @@ int kaProgramInit(struct kaWindow* window, const char* vertex_code, const char* 
 	GLuint fragment = 0;
 
 	jaStatusSet(st, "kaProgramInit", JA_STATUS_SUCCESS, NULL);
+
+	if (vertex_code == NULL || fragment_code == NULL)
+	{
+		jaStatusSet(st, "kaProgramInit", JA_STATUS_INVALID_ARGUMENT, NULL);
+		goto return_failure;
+	}
 
 	// Compile shaders
 	if ((vertex = glCreateShader(GL_VERTEX_SHADER)) == 0 || (fragment = glCreateShader(GL_FRAGMENT_SHADER)) == 0)
@@ -241,7 +275,7 @@ inline void kaProgramFree(struct kaWindow* window, struct kaProgram* program)
 {
 	(void)window;
 
-	if (program->glptr != 0)
+	if (program != NULL && program->glptr != 0)
 	{
 		glDeleteProgram(program->glptr);
 		program->glptr = 0;
@@ -297,7 +331,7 @@ inline void kaVerticesFree(struct kaWindow* window, struct kaVertices* vertices)
 {
 	(void)window;
 
-	if (vertices->glptr != 0)
+	if (vertices != NULL && vertices->glptr != 0)
 	{
 		glDeleteBuffers(1, &vertices->glptr);
 		vertices->glptr = 0;
@@ -352,7 +386,7 @@ inline void kaIndexFree(struct kaWindow* window, struct kaIndex* index)
 {
 	(void)window;
 
-	if (index->glptr != 0)
+	if (index != NULL && index->glptr != 0)
 	{
 		glDeleteBuffers(1, &index->glptr);
 		index->glptr = 0;
@@ -383,9 +417,6 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enu
 		jaStatusSet(st, "kaTextureInitImage", JA_STATUS_ERROR, "Creating GL texture");
 		return 1;
 	}
-
-	if (filter == KA_FILTER_DEFAULT)
-		filter = window->cfg_default_filter;
 
 	out->filter = filter;
 	out->wrap = wrap;
@@ -518,7 +549,7 @@ inline void kaTextureFree(struct kaWindow* window, struct kaTexture* texture)
 {
 	(void)window;
 
-	if (texture->glptr != 0)
+	if (texture != NULL && texture->glptr != 0)
 	{
 		glDeleteTextures(1, &texture->glptr);
 		texture->glptr = 0;

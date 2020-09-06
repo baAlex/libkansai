@@ -118,7 +118,7 @@ int main()
 	printf(" - %s\n", jaVersionString());
 	printf(" - %s\n", kaVersionString());
 
-	if (kaContextStart(NULL, &st) != 0)
+	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
 	if (kaWindowCreate("Window A", sInit, sFrame, sResize, sFunction, sClose, &a, &st) != 0)

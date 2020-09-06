@@ -7,9 +7,7 @@
 #ifndef CONTEXT_PRIVATE_H
 #define CONTEXT_PRIVATE_H
 
-#include "japan-list.h"
 #include "kansai-context.h"
-
 #include <string.h>
 
 #include "glad/glad.h" // Before SDL2
@@ -19,10 +17,13 @@
 #define ATTRIBUTE_COLOUR 11
 #define ATTRIBUTE_UV 12
 
+#define MAX_WINDOWS 4
+
+
 struct kaWindow
 {
 	// ---- Agnostic side ----
-	void (*init_callback)(struct kaWindow*, void*, struct jaStatus*);
+
 	void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*);
 	void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*);
 	void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*);
@@ -33,8 +34,6 @@ struct kaWindow
 	bool resized_mark;
 	uint32_t last_frame_ms;
 	bool is_fullscreen;
-
-	enum kaTextureFilter cfg_default_filter;
 
 	struct jaMatrix4 world;
 	struct jaMatrix4 local;
@@ -62,7 +61,9 @@ struct kaWindow
 
 	struct jaImage* temp_image;
 
+
 	// ---- SDL2 side ----
+
 	SDL_Window* sdl_window;
 	SDL_GLContext* gl_context;
 };
@@ -70,14 +71,18 @@ struct kaWindow
 struct kaContext
 {
 	// ---- Agnostic side ----
+
 	bool cfg_vsync;
 	size_t frame_no;
 
+
 	// ---- SDL2 side ----
+
+	bool glad_initialized;
 	size_t sdl_references;
-	struct jaList windows;
 	struct kaEvents events;
 
+	struct kaWindow* windows[MAX_WINDOWS];
 	struct kaWindow* focused_window;
 
 } g_context; // Globals! nooooo!
