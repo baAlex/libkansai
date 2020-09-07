@@ -219,7 +219,7 @@ int kaProgramInit(struct kaWindow* window, const char* vertex_code, const char* 
 	// Compile shaders
 	if ((vertex = glCreateShader(GL_VERTEX_SHADER)) == 0 || (fragment = glCreateShader(GL_FRAGMENT_SHADER)) == 0)
 	{
-		jaStatusSet(st, "kaProgramInit", JA_STATUS_ERROR, "Creating GL shader\n");
+		jaStatusSet(st, "kaProgramInit", JA_STATUS_ERROR, "creating GL shader\n");
 		goto return_failure;
 	}
 
@@ -232,7 +232,7 @@ int kaProgramInit(struct kaWindow* window, const char* vertex_code, const char* 
 	// Create program
 	if ((out->glptr = glCreateProgram()) == 0)
 	{
-		jaStatusSet(st, "kaProgramInit", JA_STATUS_ERROR, "Creating GL program\n");
+		jaStatusSet(st, "kaProgramInit", JA_STATUS_ERROR, "creating GL program\n");
 		goto return_failure;
 	}
 
@@ -298,7 +298,7 @@ int kaVerticesInit(struct kaWindow* window, const struct kaVertex* data, uint16_
 
 	if (glIsBuffer(out->glptr) == GL_FALSE)
 	{
-		jaStatusSet(st, "kaVerticesInit", JA_STATUS_ERROR, "Creating GL buffer");
+		jaStatusSet(st, "kaVerticesInit", JA_STATUS_ERROR, "creating GL buffer");
 		goto return_failure;
 	}
 
@@ -307,7 +307,7 @@ int kaVerticesInit(struct kaWindow* window, const struct kaVertex* data, uint16_
 
 	if ((size_t)reported_size != (sizeof(struct kaVertex) * length))
 	{
-		jaStatusSet(st, "kaVerticesInit", JA_STATUS_ERROR, "Attaching data");
+		jaStatusSet(st, "kaVerticesInit", JA_STATUS_ERROR, "attaching data");
 		goto return_failure;
 	}
 
@@ -353,7 +353,7 @@ int kaIndexInit(struct kaWindow* window, const uint16_t* data, size_t length, st
 
 	if (glIsBuffer(out->glptr) == GL_FALSE)
 	{
-		jaStatusSet(st, "kaIndexInit", JA_STATUS_ERROR, "Creating GL buffer");
+		jaStatusSet(st, "kaIndexInit", JA_STATUS_ERROR, "creating GL buffer");
 		goto return_failure;
 	}
 
@@ -362,7 +362,7 @@ int kaIndexInit(struct kaWindow* window, const uint16_t* data, size_t length, st
 
 	if ((size_t)reported_size != (sizeof(uint16_t) * length))
 	{
-		jaStatusSet(st, "kaIndexInit", JA_STATUS_ERROR, "Attaching data");
+		jaStatusSet(st, "kaIndexInit", JA_STATUS_ERROR, "attaching data");
 		goto return_failure;
 	}
 
@@ -400,11 +400,11 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enu
 	(void)window;
 	GLint old_bind = 0;
 
-	jaStatusSet(st, "kaTextureInitImage", JA_STATUS_SUCCESS, NULL);
+	jaStatusSet(st, "kaTextureInit", JA_STATUS_SUCCESS, NULL);
 
 	if (image->format != JA_IMAGE_U8)
 	{
-		jaStatusSet(st, "kaTextureInitImage", JA_STATUS_ERROR, "Only 8 bits per component images supported");
+		jaStatusSet(st, "kaTextureInit", JA_STATUS_ERROR, "only 8 bits per component images supported");
 		return 1;
 	}
 
@@ -414,7 +414,7 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enu
 
 	if (glIsTexture(out->glptr) == GL_FALSE)
 	{
-		jaStatusSet(st, "kaTextureInitImage", JA_STATUS_ERROR, "Creating GL texture");
+		jaStatusSet(st, "kaTextureInit", JA_STATUS_ERROR, "creating GL texture");
 		return 1;
 	}
 
@@ -492,7 +492,7 @@ int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, e
                           enum kaTextureWrap wrap, struct kaTexture* out, struct jaStatus* st)
 {
 	struct jaImage* image = NULL;
-	jaStatusSet(st, "kaTextureInitFilename", JA_STATUS_SUCCESS, NULL);
+	jaStatusSet(st, "kaTextureInit", JA_STATUS_SUCCESS, NULL);
 
 	if ((image = jaImageLoad(image_filename, st)) == NULL)
 		return 1;
