@@ -366,6 +366,9 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	window->user_data = user_data;
 
 	// 2 - SDL2 objects
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
 	if ((window->sdl_window = SDL_CreateWindow(caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH,
 	                                           WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE)) == NULL)
 	{
@@ -402,7 +405,8 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 
 		printf("\n%s\n", glGetString(GL_VENDOR));
 		printf("%s\n", glGetString(GL_RENDERER));
-		printf("%s\n\n", glGetString(GL_VERSION));
+		printf("%s\n", glGetString(GL_VERSION));
+		printf("%s\n\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 		g_context.glad_initialized = true;
 	}
@@ -579,10 +583,10 @@ return_failure:
 }
 
 
-inline size_t kaGetTime(struct kaWindow* window)
+inline unsigned kaGetTime(struct kaWindow* window)
 {
 	(void)window;
-	return (size_t)SDL_GetTicks();
+	return SDL_GetTicks();
 }
 
 
@@ -590,6 +594,12 @@ inline size_t kaGetFrame(struct kaWindow* window)
 {
 	(void)window;
 	return g_context.frame_no;
+}
+
+
+inline void kaSleep(unsigned ms)
+{
+	SDL_Delay(ms);
 }
 
 
@@ -605,4 +615,6 @@ inline void kaSwitchFullscreen(struct kaWindow* window)
 		SDL_SetWindowFullscreen(window->sdl_window, 0);
 		window->is_fullscreen = false;
 	}
+
+	window->resized_mark = true;
 }

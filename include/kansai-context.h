@@ -142,8 +142,9 @@ KA_EXPORT void kaDrawDefault(struct kaWindow* window);
 KA_EXPORT struct jaImage* kaTakeScreenshot(struct kaWindow* window, struct jaStatus* st);
 
 KA_EXPORT void kaSetCleanColor(struct kaWindow* window, uint8_t r, uint8_t g, uint8_t b);
-KA_EXPORT size_t kaGetTime(struct kaWindow* window);
+KA_EXPORT unsigned kaGetTime(struct kaWindow* window);
 KA_EXPORT size_t kaGetFrame(struct kaWindow* window);
+KA_EXPORT void kaSleep(unsigned ms);
 
 KA_EXPORT void kaSwitchFullscreen(struct kaWindow* window);
 
