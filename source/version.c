@@ -39,7 +39,7 @@ inline int kaVersionMajor()
 
 inline int kaVersionMinor()
 {
-	return 1;
+	return 2;
 }
 
 
@@ -51,5 +51,5 @@ inline int kaVersionPatch()
 
 inline char* kaVersionString()
 {
-	return "LibKansai v0.1.0";
+	return "LibKansai v0.2.0";
 }
