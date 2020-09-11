@@ -58,7 +58,7 @@ static inline int sSwitchContext(struct kaWindow* window, struct jaStatus* st)
 	if (SDL_GL_MakeCurrent(window->sdl_window, window->gl_context) != 0)
 	{
 		fprintf(stderr, "\n%s\n", SDL_GetError());
-		jaStatusSet(st, "SwitchWindow", JA_STATUS_ERROR, "SDL_GL_MakeCurrent()");
+		jaStatusSet(st, "SwitchContext", JA_STATUS_ERROR, "SDL_GL_MakeCurrent()");
 		return 1;
 	}
 
