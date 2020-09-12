@@ -82,6 +82,6 @@ if (KANSAI_BUILD_SKETCHES)
 	add_executable("multiple-windows" "./sketches/multiple-windows.c")
 	target_link_libraries("multiple-windows" PRIVATE "kansai-static")
 
-	add_executable("noise" "./sketches/viewer.c")
+	add_executable("viewer" "./sketches/viewer.c")
 	target_link_libraries("viewer" PRIVATE "kansai-static")
 endif()
