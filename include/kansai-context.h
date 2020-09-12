@@ -52,7 +52,7 @@ struct kaProgram
 struct kaVertex
 {
 	struct jaVector3 position;
-	struct jaVector4 colour;
+	struct jaVector4 color;
 	struct jaVector2 uv;
 };
 
@@ -132,9 +132,9 @@ KA_EXPORT void kaSetVertices(struct kaWindow* window, const struct kaVertices* v
 KA_EXPORT void kaSetTexture(struct kaWindow* window, int unit, const struct kaTexture* texture);
 
 KA_EXPORT void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix);
-KA_EXPORT void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix);
 KA_EXPORT void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, struct jaVector3 origin);
 KA_EXPORT void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, struct jaVector3 origin);
+KA_EXPORT void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix);
 
 KA_EXPORT void kaDraw(struct kaWindow* window, const struct kaIndex* index);
 KA_EXPORT void kaDrawDefault(struct kaWindow* window);

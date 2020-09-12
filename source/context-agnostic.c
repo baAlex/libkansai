@@ -83,7 +83,7 @@ inline void kaSetVertices(struct kaWindow* window, const struct kaVertices* vert
 
 		glBindBuffer(GL_ARRAY_BUFFER, vertices->glptr);
 		glVertexAttribPointer(ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), NULL);
-		glVertexAttribPointer(ATTRIBUTE_COLOUR, 4, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), ((float*)NULL) + 3);
+		glVertexAttribPointer(ATTRIBUTE_COLOR, 4, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), ((float*)NULL) + 3);
 		glVertexAttribPointer(ATTRIBUTE_UV, 2, GL_FLOAT, GL_FALSE, sizeof(struct kaVertex), ((float*)NULL) + 7);
 	}
 }
@@ -116,18 +116,6 @@ inline void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix)
 }
 
 
-inline void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
-{
-	if (window == NULL)
-		return;
-
-	memcpy(&window->local, &matrix, sizeof(struct jaMatrix4));
-
-	if (window->current_program != NULL)
-		glUniformMatrix4fv(window->uniform.local, 1, GL_FALSE, &window->local.e[0][0]);
-}
-
-
 inline void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, struct jaVector3 origin)
 {
 	if (window == NULL)
@@ -157,6 +145,18 @@ inline void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, 
 		glUniformMatrix4fv(window->uniform.camera, 1, GL_FALSE, &window->camera.e[0][0]);
 		glUniform3fv(window->uniform.camera_position, 1, (float*)&window->camera_position);
 	}
+}
+
+
+inline void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
+{
+	if (window == NULL)
+		return;
+
+	memcpy(&window->local, &matrix, sizeof(struct jaMatrix4));
+
+	if (window->current_program != NULL)
+		glUniformMatrix4fv(window->uniform.local, 1, GL_FALSE, &window->local.e[0][0]);
 }
 
 
@@ -240,7 +240,7 @@ int kaProgramInit(struct kaWindow* window, const char* vertex_code, const char* 
 	glAttachShader(out->glptr, fragment);
 
 	glBindAttribLocation(out->glptr, ATTRIBUTE_POSITION, "vertex_position"); // Before link!
-	glBindAttribLocation(out->glptr, ATTRIBUTE_COLOUR, "vertex_colour");
+	glBindAttribLocation(out->glptr, ATTRIBUTE_COLOR, "vertex_color");
 	glBindAttribLocation(out->glptr, ATTRIBUTE_UV, "vertex_uv");
 
 	// Link

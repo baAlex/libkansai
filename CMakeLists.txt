@@ -73,12 +73,15 @@ endif ()
 
 if (KANSAI_BUILD_SKETCHES)
 
+	add_executable("noise" "./sketches/noise.c")
+	target_link_libraries("noise" PRIVATE "kansai-static")
+
 	add_executable("square" "./sketches/square.c")
 	target_link_libraries("square" PRIVATE "kansai-static")
 
 	add_executable("multiple-windows" "./sketches/multiple-windows.c")
 	target_link_libraries("multiple-windows" PRIVATE "kansai-static")
 
-	add_executable("noise" "./sketches/noise.c")
-	target_link_libraries("noise" PRIVATE "kansai-static")
+	add_executable("noise" "./sketches/viewer.c")
+	target_link_libraries("viewer" PRIVATE "kansai-static")
 endif()

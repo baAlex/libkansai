@@ -14,7 +14,7 @@
 #include <SDL2/SDL.h>
 
 #define ATTRIBUTE_POSITION 10
-#define ATTRIBUTE_COLOUR 11
+#define ATTRIBUTE_COLOR 11
 #define ATTRIBUTE_UV 12
 
 #define MAX_WINDOWS 4
@@ -36,9 +36,9 @@ struct kaWindow
 	bool is_fullscreen;
 
 	struct jaMatrix4 world;
-	struct jaMatrix4 local;
 	struct jaMatrix4 camera;
 	struct jaVector3 camera_position;
+	struct jaMatrix4 local;
 
 	const struct kaProgram* current_program;
 	const struct kaVertices* current_vertices;

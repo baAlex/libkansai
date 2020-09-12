@@ -96,12 +96,12 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	{
 		const char* vertex_code =
 		    "#version 100\n"
-		    "attribute vec3 vertex_position; attribute vec4 vertex_colour; attribute vec2 vertex_uv;"
-		    "uniform mat4 world; uniform mat4 local; uniform mat4 camera;"
-		    "varying vec4 colour; varying vec2 uv;"
+		    "attribute vec3 vertex_position; attribute vec4 vertex_color; attribute vec2 vertex_uv;"
+		    "uniform mat4 world; uniform mat4 camera; uniform mat4 local;"
+		    "varying vec4 color; varying vec2 uv;"
 
-		    "void main() { colour = vertex_colour; uv = vertex_uv;"
-		    "gl_Position = world * local * camera * vec4(vertex_position, 1.0); }";
+		    "void main() { color = vertex_color; uv = vertex_uv;"
+		    "gl_Position = world * camera * local * vec4(vertex_position, 1.0); }";
 
 		const char* fragment_code =
 		    "#version 100\n"

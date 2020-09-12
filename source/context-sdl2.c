@@ -418,7 +418,7 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	glEnableVertexAttribArray(ATTRIBUTE_POSITION);
-	glEnableVertexAttribArray(ATTRIBUTE_COLOUR);
+	glEnableVertexAttribArray(ATTRIBUTE_COLOR);
 	glEnableVertexAttribArray(ATTRIBUTE_UV);
 
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -428,29 +428,29 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	{
 		uint16_t raw_index[] = {2, 1, 0, 3, 2, 0};
 		struct kaVertex raw_vertices[] = {
-		    {.position = {-0.5f, -0.5f, 0.0f}, .colour = {1.0f, 0.0f, 0.0f, 1.0f}, .uv = {0.0f, 1.0f}},
-		    {.position = {-0.5f, +0.5f, 0.0f}, .colour = {0.0f, 1.0f, 0.0f, 1.0f}, .uv = {0.0f, 0.0f}},
-		    {.position = {+0.5f, +0.5f, 0.0f}, .colour = {0.0f, 0.0f, 1.0f, 1.0f}, .uv = {1.0f, 0.0f}},
-		    {.position = {+0.5f, -0.5f, 0.0f}, .colour = {0.5f, 0.5f, 0.5f, 1.0f}, .uv = {1.0f, 1.0f}}};
+		    {.position = {-0.5f, -0.5f, 0.0f}, .color = {1.0f, 0.0f, 0.0f, 1.0f}, .uv = {0.0f, 1.0f}},
+		    {.position = {-0.5f, +0.5f, 0.0f}, .color = {0.0f, 1.0f, 0.0f, 1.0f}, .uv = {0.0f, 0.0f}},
+		    {.position = {+0.5f, +0.5f, 0.0f}, .color = {0.0f, 0.0f, 1.0f, 1.0f}, .uv = {1.0f, 0.0f}},
+		    {.position = {+0.5f, -0.5f, 0.0f}, .color = {0.5f, 0.5f, 0.5f, 1.0f}, .uv = {1.0f, 1.0f}}};
 
 		const char* vertex_code =
 		    "#version 100\n"
-		    "attribute vec3 vertex_position; attribute vec4 vertex_colour; attribute vec2 vertex_uv;"
-		    "uniform mat4 world; uniform mat4 local; uniform mat4 camera;"
-		    "varying vec4 colour; varying vec2 uv;"
+		    "attribute vec3 vertex_position; attribute vec4 vertex_color; attribute vec2 vertex_uv;"
+		    "uniform mat4 world; uniform mat4 camera; uniform mat4 local;"
+		    "varying vec4 color; varying vec2 uv;"
 
-		    "void main() { colour = vertex_colour; uv = vertex_uv;"
-		    "gl_Position = world * local * camera * vec4(vertex_position, 1.0); }";
+		    "void main() { color = vertex_color; uv = vertex_uv;"
+		    "gl_Position = world * camera * local * vec4(vertex_position, 1.0); }";
 
 		const char* fragment_code =
 		    "#version 100\n"
 		    "uniform sampler2D texture0;"
-		    "varying lowp vec4 colour; varying lowp vec2 uv;"
+		    "varying lowp vec4 color; varying lowp vec2 uv;"
 
 		    "lowp vec4 Overlay(lowp vec4 a, lowp vec4 b) {"
 		    "return mix((1.0 - 2.0 * (1.0 - a) * (1.0 - b)), (2.0 * a * b), step(a, vec4(0.5)));}"
 
-		    "void main() { gl_FragColor = Overlay(colour, texture2D(texture0, uv)); }";
+		    "void main() { gl_FragColor = Overlay(color, texture2D(texture0, uv)); }";
 
 		struct jaImage image = {0};
 		uint8_t image_data[] = {128 + 16, 128 - 16, 128 - 16, 128 + 16};
@@ -473,8 +473,8 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		kaSetTexture(window, 0, &window->default_texture);
 
 		kaSetWorld(window, jaMatrix4Identity());
-		kaSetLocal(window, jaMatrix4Identity());
 		kaSetCameraMatrix(window, jaMatrix4Orthographic(-1.0f, +1.0f, -1.0f, +1.0f, 0.0f, 2.0f), jaVector3Clean());
+		kaSetLocal(window, jaMatrix4Identity());
 	}
 
 	// 6 - First callbacks
