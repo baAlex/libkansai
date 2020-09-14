@@ -17,12 +17,15 @@ endif ()
 
 set(KANSAI_SOURCES
 	"./source/aabounding.c"
-	"./source/context-agnostic.c"
-	"./source/context-sdl2.c"
+	"./source/color.c"
+	"./source/context/glad/glad.c"
+	"./source/context/update.c"
+	"./source/context/objects.c"
+	"./source/context/sdl2.c"
+	"./source/context/state.c"
 	"./source/random.c"
 	"./source/utilities.c"
 	"./source/version.c"
-	"./source/glad/glad.c"
 )
 
 find_package(SDL2)

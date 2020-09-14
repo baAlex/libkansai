@@ -23,6 +23,7 @@
 #include "japan-matrix.h"
 #include "japan-status.h"
 #include "japan-vector.h"
+#include "kansai-color.h"
 
 struct kaWindow;
 
@@ -52,7 +53,7 @@ struct kaProgram
 struct kaVertex
 {
 	struct jaVector3 position;
-	struct jaVector4 color;
+	struct kaRgba color;
 	struct jaVector2 uv;
 };
 

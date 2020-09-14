@@ -1,6 +1,6 @@
 /*-----------------------------
 
- [context-private.h]
+ [context/private.h]
  - Alexander Brandt 2019-2020
 -----------------------------*/
 
@@ -86,5 +86,10 @@ struct kaContext
 	struct kaWindow* focused_window;
 
 } g_context; // Globals! nooooo!
+
+
+int SwitchContext(struct kaWindow* window, struct jaStatus* st);
+void FreeWindow(struct kaWindow* window);
+
 
 #endif
