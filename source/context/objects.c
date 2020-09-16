@@ -337,13 +337,13 @@ int kaTextureInitImage(struct kaWindow* window, const struct jaImage* image, enu
 }
 
 
-int kaTextureInitFilename(struct kaWindow* window, const char* image_filename, enum kaTextureFilter filter,
+int kaTextureInitFilename(struct kaWindow* window, const char* filename, enum kaTextureFilter filter,
                           enum kaTextureWrap wrap, struct kaTexture* out, struct jaStatus* st)
 {
 	struct jaImage* image = NULL;
 	jaStatusSet(st, "kaTextureInit", JA_STATUS_SUCCESS, NULL);
 
-	if ((image = jaImageLoad(image_filename, st)) == NULL)
+	if ((image = jaImageLoad(filename, st)) == NULL)
 		return 1;
 
 	if (kaTextureInitImage(window, image, filter, wrap, out, st) != 0)

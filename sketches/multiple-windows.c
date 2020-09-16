@@ -87,7 +87,7 @@ static void sFunction(struct kaWindow* w, int f, void* user_data, struct jaStatu
 
 		data->screenshot_counter += 1;
 
-		if ((image = kaTakeScreenshot(w, st)) == NULL)
+		if ((image = kaScreenshot(w, st)) == NULL)
 			return;
 
 		if (jaImageSaveSgi(image, filename, st) != 0)

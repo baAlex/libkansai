@@ -160,6 +160,13 @@ inline void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
 }
 
 
+inline void kaSetCleanColor(struct kaWindow* window, uint8_t r, uint8_t g, uint8_t b)
+{
+	(void)window;
+	glClearColor((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
+}
+
+
 inline void kaDraw(struct kaWindow* window, const struct kaIndex* index)
 {
 	(void)window;
@@ -179,11 +186,4 @@ inline void kaDrawDefault(struct kaWindow* window)
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, window->default_index.glptr);
 		glDrawElements(GL_TRIANGLES, (GLsizei)window->default_index.length, GL_UNSIGNED_SHORT, NULL);
 	}
-}
-
-
-inline void kaSetCleanColor(struct kaWindow* window, uint8_t r, uint8_t g, uint8_t b)
-{
-	(void)window;
-	glClearColor((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
 }

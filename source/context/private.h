@@ -19,21 +19,20 @@
 
 #define MAX_WINDOWS 4
 
+struct kaContext;
 
 struct kaWindow
 {
-	// ---- Agnostic side ----
-
 	void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*);
 	void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*);
 	void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*);
 	void (*close_callback)(struct kaWindow*, void*);
-
 	void* user_data;
+
 	bool delete_mark;
 	bool resized_mark;
-	uint32_t last_frame_ms;
 	bool is_fullscreen;
+	uint32_t last_frame_ms;
 
 	struct jaMatrix4 world;
 	struct jaMatrix4 camera;
@@ -61,35 +60,14 @@ struct kaWindow
 
 	struct jaImage* temp_image;
 
-
-	// ---- SDL2 side ----
-
 	SDL_Window* sdl_window;
 	SDL_GLContext* gl_context;
 };
 
-struct kaContext
-{
-	// ---- Agnostic side ----
-
-	bool cfg_vsync;
-	size_t frame_no;
-
-
-	// ---- SDL2 side ----
-
-	bool glad_initialized;
-	size_t sdl_references;
-	struct kaEvents events;
-
-	struct kaWindow* windows[MAX_WINDOWS];
-	struct kaWindow* focused_window;
-
-} g_context; // Globals! nooooo!
-
-
-int SwitchContext(struct kaWindow* window, struct jaStatus* st);
-void FreeWindow(struct kaWindow* window);
-
+struct kaWindow* InternalAllocWindow();
+void InternalFreeWindow(struct kaWindow* window);
+int InternalSwitchContext(struct kaWindow* window, struct jaStatus* st);
+void InternalFocusWindow(struct kaWindow* window);
+int InternalInitGlad();
 
 #endif

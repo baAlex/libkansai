@@ -24,7 +24,7 @@ SOFTWARE.
 
 -------------------------------
 
- [context/sdl2.c]
+ [context/window.c]
  - Alexander Brandt 2019-2020
 -----------------------------*/
 
@@ -34,78 +34,7 @@ SOFTWARE.
 #define WINDOW_HEIGHT 480
 #define WINDOW_MIN_WIDTH 320
 #define WINDOW_MIN_HEIGHT 240
-
-
-int SwitchContext(struct kaWindow* window, struct jaStatus* st)
-{
-	if (SDL_GL_MakeCurrent(window->sdl_window, window->gl_context) != 0)
-	{
-		fprintf(stderr, "\n%s\n", SDL_GetError());
-		jaStatusSet(st, "SwitchContext", JA_STATUS_ERROR, "SDL_GL_MakeCurrent()");
-		return 1;
-	}
-
-	return 0;
-}
-
-
-void FreeWindow(struct kaWindow* window)
-{
-	if (window->temp_image != NULL)
-		jaImageDelete(window->temp_image);
-
-	kaProgramFree(window, &window->default_program);
-	kaVerticesFree(window, &window->default_vertices);
-	kaTextureFree(window, &window->default_texture);
-
-	if (window->gl_context != NULL)
-		SDL_GL_DeleteContext(window->gl_context);
-
-	if (window->sdl_window != NULL)
-		SDL_DestroyWindow(window->sdl_window);
-}
-
-
-int kaContextStart(struct jaStatus* st)
-{
-	jaStatusSet(st, "kaContextStart", JA_STATUS_SUCCESS, NULL);
-
-	if (g_context.sdl_references == 0)
-	{
-		if (SDL_Init(SDL_INIT_VIDEO) != 0)
-		{
-			fprintf(stderr, "\n%s\n", SDL_GetError());
-			jaStatusSet(st, "kaContextStart", JA_STATUS_ERROR, "SDL_Init()");
-			return 1;
-		}
-
-		g_context.cfg_vsync = true;
-	}
-
-	g_context.sdl_references += 1;
-	return 0;
-}
-
-
-void kaContextStop()
-{
-	g_context.sdl_references -= 1;
-
-	if (g_context.sdl_references == 0)
-	{
-		for (size_t i = 0; i < MAX_WINDOWS; i++)
-		{
-			if (g_context.windows[i] != NULL)
-			{
-				FreeWindow(g_context.windows[i]);
-				g_context.windows[i] = NULL;
-			}
-		}
-
-		SDL_Quit();
-		memset(&g_context, 0, sizeof(struct kaContext));
-	}
-}
+#define WINDOW_VSYNC 1
 
 
 int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
@@ -115,28 +44,14 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
                    void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st)
 {
 	struct kaWindow* window = NULL;
-	size_t window_i = MAX_WINDOWS;
-
 	jaStatusSet(st, "kaWindowCreate", JA_STATUS_SUCCESS, NULL);
 
-	// 1 - Window
-	if ((window = calloc(1, sizeof(struct kaWindow))) == NULL)
+	// Window
+	if ((window = InternalAllocWindow()) == NULL)
 	{
 		jaStatusSet(st, "kaWindowCreate", JA_STATUS_MEMORY_ERROR, NULL);
 		goto return_failure;
 	}
-
-	for (window_i = 0; window_i < MAX_WINDOWS; window_i++)
-	{
-		if (g_context.windows[window_i] == NULL)
-		{
-			g_context.windows[window_i] = window;
-			break;
-		}
-	}
-
-	if (window_i == MAX_WINDOWS)
-		goto return_failure;
 
 	window->frame_callback = frame_callback;
 	window->resize_callback = resize_callback;
@@ -144,11 +59,11 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	window->close_callback = close_callback;
 	window->user_data = user_data;
 
-	// 2 - SDL2 objects
+	// SDL2
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
-	if ((window->sdl_window = SDL_CreateWindow(caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH,
+	if ((window->sdl_window = SDL_CreateWindow(caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH,
 	                                           WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE)) == NULL)
 	{
 		fprintf(stderr, "\n%s\n", SDL_GetError());
@@ -163,38 +78,24 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		goto return_failure;
 	}
 
-	if (SwitchContext(window, st) != 0)
+	SDL_SetWindowMinimumSize(window->sdl_window, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
+	InternalFocusWindow(window);
+
+	SDL_GL_SetSwapInterval(WINDOW_VSYNC);
+
+	// GLAD (after context creation)
+	if (InternalSwitchContext(window, st) != 0)
 		goto return_failure;
 
-	SDL_SetWindowMinimumSize(window->sdl_window, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
-	SDL_GL_SetSwapInterval((g_context.cfg_vsync == true) ? 1 : 0);
-
-	SDL_RaiseWindow(window->sdl_window);
-	g_context.focused_window = window;
-
-	// 3 - Initialize GLAD (after context creation)
-	if (g_context.glad_initialized == false)
+	if (InternalInitGlad() != 0)
 	{
-		// FIXME, this probably don't survive to multiple contexts
-		if (gladLoadGLES2Loader(SDL_GL_GetProcAddress) == 0)
-		{
-			jaStatusSet(st, "kaWindowCreate", JA_STATUS_ERROR, "gladLoad()");
-			goto return_failure;
-		}
-
-		printf("\n%s\n", glGetString(GL_VENDOR));
-		printf("%s\n", glGetString(GL_RENDERER));
-		printf("%s\n", glGetString(GL_VERSION));
-		printf("%s\n\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-
-		g_context.glad_initialized = true;
+		jaStatusSet(st, "kaWindowCreate", JA_STATUS_ERROR, "gladLoad()");
+		goto return_failure;
 	}
 
-	// 4 - Configure OpenGL
+	// OpenGL
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	glEnableVertexAttribArray(ATTRIBUTE_POSITION);
 	glEnableVertexAttribArray(ATTRIBUTE_COLOR);
@@ -203,7 +104,7 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	// 5 - Create default OpenGL objects and set default values
+	// Default objects and values
 	{
 		uint16_t raw_index[] = {2, 1, 0, 3, 2, 0};
 		struct kaVertex raw_vertices[] = {
@@ -254,15 +155,18 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		kaSetWorld(window, jaMatrix4Identity());
 		kaSetCameraMatrix(window, jaMatrix4Orthographic(-1.0f, +1.0f, -1.0f, +1.0f, 0.0f, 2.0f), jaVector3Clean());
 		kaSetLocal(window, jaMatrix4Identity());
+
+		kaSetCleanColor(window, 0.0f, 0.0f, 0.0f);
 	}
 
-	// 6 - First callbacks
+	// First callbacks
 	{
 		struct jaStatus callback_st = {0};
 		callback_st.code = JA_STATUS_SUCCESS; // Assume success
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Init
 		if (init_callback != NULL)
 			init_callback(window, window->user_data, &callback_st);
 
@@ -272,6 +176,7 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 			goto return_failure;
 		}
 
+		// Resize
 		if (window->resize_callback != NULL)
 			window->resize_callback(window, WINDOW_WIDTH, WINDOW_HEIGHT, window->user_data, &callback_st);
 
@@ -280,21 +185,15 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 			jaStatusCopy(&callback_st, st);
 			goto return_failure;
 		}
-
-		SDL_GL_SwapWindow(window->sdl_window);
 	}
 
 	// Bye!
+	SDL_GL_SwapWindow(window->sdl_window);
 	return 0;
 
 return_failure:
 	if (window != NULL)
-	{
-		FreeWindow(window);
-
-		if (window_i < MAX_WINDOWS)
-			g_context.windows[window_i] = NULL;
-	}
+		InternalFreeWindow(window);
 
 	return 1;
 }
@@ -306,7 +205,7 @@ inline void kaWindowDelete(struct kaWindow* window)
 }
 
 
-struct jaImage* kaTakeScreenshot(struct kaWindow* window, struct jaStatus* st)
+struct jaImage* kaScreenshot(struct kaWindow* window, struct jaStatus* st)
 {
 	struct jaImage* image = NULL;
 	int window_w;
@@ -359,26 +258,6 @@ return_failure:
 		jaImageDelete(image);
 
 	return NULL;
-}
-
-
-inline unsigned kaGetTime(struct kaWindow* window)
-{
-	(void)window;
-	return SDL_GetTicks();
-}
-
-
-inline size_t kaGetFrame(struct kaWindow* window)
-{
-	(void)window;
-	return g_context.frame_no;
-}
-
-
-inline void kaSleep(unsigned ms)
-{
-	SDL_Delay(ms);
 }
 
 
