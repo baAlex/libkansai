@@ -121,10 +121,10 @@ int main()
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate("Window A", sInit, sFrame, sResize, sFunction, sClose, &a, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sFunction, sClose, &a, &st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate("Window B", sInit, sFrame, sResize, sFunction, sClose, &b, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sFunction, sClose, &b, &st) != 0)
 		goto return_failure;
 
 	while (1)

@@ -30,21 +30,52 @@ SOFTWARE.
 
 #include "private.h"
 
-#define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 480
-#define WINDOW_MIN_WIDTH 320
-#define WINDOW_MIN_HEIGHT 240
-#define WINDOW_VSYNC 1
+
+#define DEFAULT_WIDTH 640
+#define DEFAULT_HEIGHT 480
+#define DEFAULT_FULLSCREEN 0
+#define DEFAULT_VSYNC 1
 
 
-int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
+static inline void sPrintWarning(struct jaStatus* st) // Only make noise if the cvar exists
+{
+	if (st->code != JA_STATUS_INVALID_ARGUMENT && st->code != JA_STATUS_SUCCESS)
+		jaStatusPrint("LibKansai", *st);
+}
+
+
+int kaWindowCreate(const struct jaConfiguration* cfg, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
                    void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
                    void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
                    void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*),
                    void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st)
 {
 	struct kaWindow* window = NULL;
+
+	int cfg_width = DEFAULT_WIDTH;
+	int cfg_height = DEFAULT_HEIGHT;
+	int cfg_fullscreen = DEFAULT_FULLSCREEN;
+	int cfg_vsync = DEFAULT_VSYNC;
+	const char* cfg_caption = "LibKansai";
+
 	jaStatusSet(st, "kaWindowCreate", JA_STATUS_SUCCESS, NULL);
+
+	// Configurations
+	if (cfg != NULL)
+	{
+		struct jaStatus cfg_st = {0};
+
+		jaCvarGetValueInt(jaCvarGet(cfg, "render.width"), &cfg_width, &cfg_st);
+		sPrintWarning(&cfg_st);
+		jaCvarGetValueInt(jaCvarGet(cfg, "render.height"), &cfg_height, &cfg_st);
+		sPrintWarning(&cfg_st);
+		jaCvarGetValueInt(jaCvarGet(cfg, "render.fullscreen"), &cfg_fullscreen, &cfg_st);
+		sPrintWarning(&cfg_st);
+		jaCvarGetValueInt(jaCvarGet(cfg, "render.vsync"), &cfg_vsync, &cfg_st);
+		sPrintWarning(&cfg_st);
+		jaCvarGetValueString(jaCvarGet(cfg, "kansai.caption"), &cfg_caption, &cfg_st);
+		sPrintWarning(&cfg_st);
+	}
 
 	// Window
 	if ((window = InternalAllocWindow()) == NULL)
@@ -63,8 +94,8 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
-	if ((window->sdl_window = SDL_CreateWindow(caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH,
-	                                           WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE)) == NULL)
+	if ((window->sdl_window = SDL_CreateWindow(cfg_caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, cfg_width,
+	                                           cfg_height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE)) == NULL)
 	{
 		fprintf(stderr, "\n%s\n", SDL_GetError());
 		jaStatusSet(st, "kaWindowCreate", JA_STATUS_ERROR, "SDL_CreateWindow()");
@@ -78,10 +109,13 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 		goto return_failure;
 	}
 
-	SDL_SetWindowMinimumSize(window->sdl_window, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT);
+	SDL_SetWindowMinimumSize(window->sdl_window, 320, 240);
 	InternalFocusWindow(window);
 
-	SDL_GL_SetSwapInterval(WINDOW_VSYNC);
+	SDL_GL_SetSwapInterval(cfg_vsync);
+
+	if (cfg_fullscreen != 0)
+		kaSwitchFullscreen(window);
 
 	// GLAD (after context creation)
 	if (InternalSwitchContext(window, st) != 0)
@@ -178,7 +212,7 @@ int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, 
 
 		// Resize
 		if (window->resize_callback != NULL)
-			window->resize_callback(window, WINDOW_WIDTH, WINDOW_HEIGHT, window->user_data, &callback_st);
+			window->resize_callback(window, cfg_width, cfg_height, window->user_data, &callback_st);
 
 		if (callback_st.code != JA_STATUS_SUCCESS)
 		{
@@ -211,6 +245,7 @@ struct jaImage* kaScreenshot(struct kaWindow* window, struct jaStatus* st)
 	int window_w;
 	int window_h;
 
+	jaStatusSet(st, "kaScreenshot", JA_STATUS_SUCCESS, NULL);
 	SDL_GetWindowSize(window->sdl_window, &window_w, &window_h);
 
 	// Create a generic image
@@ -219,7 +254,7 @@ struct jaImage* kaScreenshot(struct kaWindow* window, struct jaStatus* st)
 
 	if ((window->temp_image = jaImageCreate(JA_IMAGE_U8, (size_t)window_w, (size_t)window_h + 1, 4)) == NULL)
 	{
-		jaStatusSet(st, "kaTakeScreenshot", JA_STATUS_MEMORY_ERROR, NULL);
+		jaStatusSet(st, "kaScreenshot", JA_STATUS_MEMORY_ERROR, NULL);
 		goto return_failure;
 	}
 
@@ -231,7 +266,7 @@ struct jaImage* kaScreenshot(struct kaWindow* window, struct jaStatus* st)
 	if (glGetError() != GL_NO_ERROR)
 	{
 		// TODO, glReadPixels has tons of corners where it can fail.
-		jaStatusSet(st, "kaTakeScreenshot", JA_STATUS_ERROR, NULL);
+		jaStatusSet(st, "kaScreenshot", JA_STATUS_ERROR, NULL);
 		goto return_failure;
 	}
 

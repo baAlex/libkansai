@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NAME, sInit, sFrame, sResize, NULL, sClose, &data, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, sResize, NULL, sClose, &data, &st) != 0)
 		goto return_failure;
 
 	while (1)

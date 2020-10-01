@@ -159,7 +159,7 @@ int main()
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NAME, sInit, sFrame, NULL, NULL, NULL, &data, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, NULL, NULL, NULL, &data, &st) != 0)
 		goto return_failure;
 
 	while (1)

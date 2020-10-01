@@ -25,6 +25,9 @@
 #include "japan-vector.h"
 #include "kansai-color.h"
 
+#define JA_WIP
+#include "japan-configuration.h"
+
 struct kaWindow;
 
 struct kaEvents
@@ -105,7 +108,7 @@ KA_EXPORT void kaSleep(unsigned ms);
 
 // context/window.c
 
-KA_EXPORT int kaWindowCreate(const char* caption, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
+KA_EXPORT int kaWindowCreate(const struct jaConfiguration*, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
                              void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
                              void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
                              void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*),

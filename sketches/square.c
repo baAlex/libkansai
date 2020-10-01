@@ -60,7 +60,13 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 }
 
 
-int main()
+static void sArgumentsCallback(enum jaStatusCode code, int i, const char* key, const char* value)
+{
+	printf("[Warning] %s, argument %i ['%s' = '%s']\n", jaStatusCodeMessage(code), i, key, value);
+}
+
+
+int main(int argc, const char* argv[])
 {
 	struct jaStatus st = {0};
 	struct WindowData data = {0};
@@ -68,8 +74,26 @@ int main()
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NAME, sInit, sFrame, NULL, NULL, NULL, &data, &st) != 0)
-		goto return_failure;
+	{
+		struct jaConfiguration* cfg = jaConfigurationCreate();
+
+		if (cfg == NULL)
+			goto return_failure;
+
+		if (jaCvarCreateInt(cfg, "render.width", 720, 320, INT_MAX, &st) == NULL ||
+		    jaCvarCreateInt(cfg, "render.height", 480, 240, INT_MAX, &st) == NULL ||
+		    jaCvarCreateInt(cfg, "render.fullscreen", 0, 0, 1, &st) == NULL ||
+		    jaCvarCreateInt(cfg, "render.vsync", 1, 0, 1, &st) == NULL ||
+		    jaCvarCreateString(cfg, "kansai.caption", "Square", NULL, NULL, &st) == NULL)
+			goto return_failure;
+
+		jaConfigurationArgumentsEx(cfg, JA_UTF8, JA_SKIP_FIRST, sArgumentsCallback, argc, argv);
+
+		if (kaWindowCreate(cfg, sInit, sFrame, NULL, NULL, NULL, &data, &st) != 0)
+			goto return_failure;
+
+		jaConfigurationDelete(cfg);
+	}
 
 	while (1)
 	{
