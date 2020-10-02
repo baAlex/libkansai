@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 project("LibKansai" C)
 
 option(KANSAI_EXPORT_SYMBOLS "Export symbols" ON)
