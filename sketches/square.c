@@ -24,12 +24,12 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	(void)st;
 	struct WindowData* data = user_data;
 
-	data->position = jaVector2Set(160.0f, 120.0f);
+	data->position = (struct jaVector2){160.0f, 120.0f};
 	kaSeed(&data->rng, 0);
 
 	kaSetWorld(w, jaMatrix4Identity());
 	kaSetLocal(w, jaMatrix4RotateZ(jaMatrix4Identity(), jaDegToRad(45.0f)));
-	kaSetCameraMatrix(w, jaMatrix4Orthographic(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f), jaVector3Clean());
+	kaSetCameraMatrix(w, jaMatrix4Orthographic(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f), (struct jaVector3){0.0f, 0.0f, 0.0f});
 }
 
 
@@ -51,8 +51,7 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 		if (data->start_press == false)
 		{
 			data->start_press = true;
-			kaSetCleanColor(w, (uint8_t)(kaRandom(&data->rng) % 255), (uint8_t)(kaRandom(&data->rng) % 255),
-			                (uint8_t)(kaRandom(&data->rng) % 255));
+			kaSetCleanColor(w, kaRgbRandom(&data->rng));
 		}
 	}
 

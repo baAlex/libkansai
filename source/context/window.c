@@ -187,10 +187,10 @@ int kaWindowCreate(const struct jaConfiguration* cfg, void (*init_callback)(stru
 		kaSetTexture(window, 0, &window->default_texture);
 
 		kaSetWorld(window, jaMatrix4Identity());
-		kaSetCameraMatrix(window, jaMatrix4Orthographic(-1.0f, +1.0f, -1.0f, +1.0f, 0.0f, 2.0f), jaVector3Clean());
+		kaSetCameraMatrix(window, jaMatrix4Orthographic(-1.0f, +1.0f, -1.0f, +1.0f, 0.0f, 2.0f), (struct jaVector3){0.0f, 0.0f, 0.0f});
 		kaSetLocal(window, jaMatrix4Identity());
 
-		kaSetCleanColor(window, 0.0f, 0.0f, 0.0f);
+		kaSetCleanColor(window, (struct kaRgb){0.0f, 0.0f, 0.0f});
 	}
 
 	// First callbacks

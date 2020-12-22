@@ -148,7 +148,7 @@ KA_EXPORT void kaSetCameraLookAt(struct kaWindow*, struct jaVector3 target, stru
 KA_EXPORT void kaSetCameraMatrix(struct kaWindow*, struct jaMatrix4 matrix, struct jaVector3 origin);
 KA_EXPORT void kaSetLocal(struct kaWindow*, struct jaMatrix4);
 
-KA_EXPORT void kaSetCleanColor(struct kaWindow*, uint8_t r, uint8_t g, uint8_t b);
+KA_EXPORT void kaSetCleanColor(struct kaWindow*, struct kaRgb);
 
 KA_EXPORT void kaDraw(struct kaWindow*, const struct kaIndex*);
 KA_EXPORT void kaDrawDefault(struct kaWindow*);

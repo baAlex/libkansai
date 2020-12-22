@@ -160,10 +160,10 @@ inline void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
 }
 
 
-inline void kaSetCleanColor(struct kaWindow* window, uint8_t r, uint8_t g, uint8_t b)
+inline void kaSetCleanColor(struct kaWindow* window, struct kaRgb color)
 {
 	(void)window;
-	glClearColor((float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f, 1.0f);
+	glClearColor(color.r, color.g, color.b, 1.0f);
 }
 
 
