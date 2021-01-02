@@ -17,15 +17,13 @@
 #define ATTRIBUTE_COLOR 11
 #define ATTRIBUTE_UV 12
 
-#define MAX_WINDOWS 4
-
 struct kaContext;
 
 struct kaWindow
 {
 	void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*);
 	void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*);
-	void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*);
+	void (*keyboard_callback)(struct kaWindow*, enum kaKey, enum kaKeyMode, void*, struct jaStatus*);
 	void (*close_callback)(struct kaWindow*, void*);
 	void* user_data;
 

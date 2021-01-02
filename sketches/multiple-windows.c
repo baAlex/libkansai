@@ -66,14 +66,13 @@ static void sResize(struct kaWindow* w, int width, int height, void* user_data, 
 }
 
 
-static void sFunction(struct kaWindow* w, int f, void* user_data, struct jaStatus* st)
+static void sKeyboard(struct kaWindow* w, enum kaKey key, enum kaKeyMode mode, void* user_data, struct jaStatus* st)
 {
 	struct WindowData* data = user_data;
 
-	jaStatusSet(st, "sFunction", JA_STATUS_SUCCESS, NULL);
-	printf("F%i pressed on window %i\n", f, data->id);
+	printf("Window %i, %s key %i\n", data->id, (mode == KA_PRESSED) ? "pressed" : "released", key);
 
-	if (f == 12)
+	if (kaWindowInFocus(w) == true && key == KA_KEY_F12 && mode == KA_RELEASED)
 	{
 		struct jaImage* image = NULL;
 		char tstr[64];
@@ -121,10 +120,10 @@ int main()
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sFunction, sClose, &a, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sKeyboard, sClose, &a, &st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sFunction, sClose, &b, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sKeyboard, sClose, &b, &st) != 0)
 		goto return_failure;
 
 	while (1)

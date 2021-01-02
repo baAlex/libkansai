@@ -31,6 +31,13 @@ SOFTWARE.
 #include "private.h"
 
 
+#define ACCUMULATOR_LEN 128
+#define MAX_WINDOWS 4
+
+#define KEY_PRESS_CODE 128
+#define KEY_RELEASE_CODE 0
+
+
 struct kaContext
 {
 	size_t frame_no;
@@ -38,12 +45,13 @@ struct kaContext
 	bool glad_initialized;
 	int sdl_references;
 
-	struct kaEvents events;
+	uint8_t keyboard_accumulator[ACCUMULATOR_LEN];
 
+	uint8_t windows_no;
 	struct kaWindow* windows[MAX_WINDOWS];
 	struct kaWindow* focused_window;
 
-} g_context; // Globals! nooooo!
+} g_context = {0}; // Globals! nooooo!
 
 
 struct kaWindow* InternalAllocWindow()
@@ -71,6 +79,7 @@ struct kaWindow* InternalAllocWindow()
 		}
 	}
 
+	g_context.windows_no += 1;
 	return window;
 }
 
@@ -107,6 +116,8 @@ void InternalFreeWindow(struct kaWindow* window)
 			break;
 		}
 	}
+
+	g_context.windows_no -= 1;
 }
 
 
@@ -187,11 +198,28 @@ void kaContextStop()
 }
 
 
+static inline void sKeyboardPress(SDL_Scancode sc)
+{
+	if (sc > ACCUMULATOR_LEN) // We only support an subset
+		return;
+
+	g_context.keyboard_accumulator[sc] = KEY_PRESS_CODE + g_context.windows_no;
+}
+
+
+static inline void sKeyboardRelease(SDL_Scancode sc)
+{
+	if (sc > ACCUMULATOR_LEN)
+		return;
+
+	g_context.keyboard_accumulator[sc] = KEY_RELEASE_CODE + g_context.windows_no;
+}
+
+
 int kaContextUpdate(struct jaStatus* st)
 {
 	struct kaWindow* window = NULL;
 	struct jaStatus callback_st = {0};
-	uint16_t function_keys = 0;
 	SDL_Event e = {0};
 
 	jaStatusSet(st, "kaContextUpdate", JA_STATUS_SUCCESS, NULL);
@@ -199,58 +227,13 @@ int kaContextUpdate(struct jaStatus* st)
 	// Receive and process input
 	while (SDL_PollEvent(&e) != 0)
 	{
-		if (e.type == SDL_KEYDOWN)
+		if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
 		{
-			switch (e.key.keysym.scancode)
-			{
-			case SDL_SCANCODE_RETURN: g_context.events.a = true; break;
-			case SDL_SCANCODE_BACKSPACE: g_context.events.b = true; break;
-			case SDL_SCANCODE_Z: g_context.events.x = true; break;
-			case SDL_SCANCODE_X: g_context.events.y = true; break;
-
-			case SDL_SCANCODE_ESCAPE: g_context.events.start = true; break;
-			case SDL_SCANCODE_SPACE: g_context.events.select = true; break;
-
-			case SDL_SCANCODE_UP: g_context.events.pad_u = true; break;
-			case SDL_SCANCODE_DOWN: g_context.events.pad_d = true; break;
-			case SDL_SCANCODE_LEFT: g_context.events.pad_l = true; break;
-			case SDL_SCANCODE_RIGHT: g_context.events.pad_r = true; break;
-
-			default: break;
-			}
+			sKeyboardPress(e.key.keysym.scancode);
 		}
 		else if (e.type == SDL_KEYUP)
 		{
-			switch (e.key.keysym.scancode)
-			{
-			case SDL_SCANCODE_RETURN: g_context.events.a = false; break;
-			case SDL_SCANCODE_BACKSPACE: g_context.events.b = false; break;
-			case SDL_SCANCODE_Z: g_context.events.x = false; break;
-			case SDL_SCANCODE_X: g_context.events.y = false; break;
-
-			case SDL_SCANCODE_ESCAPE: g_context.events.start = false; break;
-			case SDL_SCANCODE_SPACE: g_context.events.select = false; break;
-
-			case SDL_SCANCODE_UP: g_context.events.pad_u = false; break;
-			case SDL_SCANCODE_DOWN: g_context.events.pad_d = false; break;
-			case SDL_SCANCODE_LEFT: g_context.events.pad_l = false; break;
-			case SDL_SCANCODE_RIGHT: g_context.events.pad_r = false; break;
-
-			case SDL_SCANCODE_F1: function_keys = (function_keys | (0x01)); break;
-			case SDL_SCANCODE_F2: function_keys = (function_keys | (0x01 << 1)); break;
-			case SDL_SCANCODE_F3: function_keys = (function_keys | (0x01 << 2)); break;
-			case SDL_SCANCODE_F4: function_keys = (function_keys | (0x01 << 3)); break;
-			case SDL_SCANCODE_F5: function_keys = (function_keys | (0x01 << 4)); break;
-			case SDL_SCANCODE_F6: function_keys = (function_keys | (0x01 << 5)); break;
-			case SDL_SCANCODE_F7: function_keys = (function_keys | (0x01 << 6)); break;
-			case SDL_SCANCODE_F8: function_keys = (function_keys | (0x01 << 7)); break;
-			case SDL_SCANCODE_F9: function_keys = (function_keys | (0x01 << 8)); break;
-			case SDL_SCANCODE_F10: function_keys = (function_keys | (0x01 << 9)); break;
-			case SDL_SCANCODE_F11: function_keys = (function_keys | (0x01 << 10)); break;
-			case SDL_SCANCODE_F12: function_keys = (function_keys | (0x01 << 11)); break;
-
-			default: break;
-			}
+			sKeyboardRelease(e.key.keysym.scancode);
 		}
 		else if (e.type == SDL_WINDOWEVENT)
 		{
@@ -276,12 +259,27 @@ int kaContextUpdate(struct jaStatus* st)
 		}
 	}
 
-	g_context.events.pad.y = ((g_context.events.pad_u) ? 1.0f : 0.0f) - ((g_context.events.pad_d) ? 1.0f : 0.0f);
-	g_context.events.pad.x = ((g_context.events.pad_r) ? 1.0f : 0.0f) - ((g_context.events.pad_l) ? 1.0f : 0.0f);
+	struct kaEvents events = {0};
+
+	events.a = (g_context.keyboard_accumulator[KA_KEY_RETURN] >= 128) ? 1 : 0;
+	events.b = (g_context.keyboard_accumulator[KA_KEY_BACKSPACE] >= 128) ? 1 : 0;
+	events.x = (g_context.keyboard_accumulator[KA_KEY_Z] >= 128) ? 1 : 0;
+	events.y = (g_context.keyboard_accumulator[KA_KEY_X] >= 128) ? 1 : 0;
+
+	events.select = (g_context.keyboard_accumulator[KA_KEY_SPACE] >= 128) ? 1 : 0;
+	events.start = (g_context.keyboard_accumulator[KA_KEY_ESCAPE] >= 128) ? 1 : 0;
+
+	events.pad_u = (g_context.keyboard_accumulator[KA_KEY_UP] >= 128) ? 1 : 0;
+	events.pad_d = (g_context.keyboard_accumulator[KA_KEY_DOWN] >= 128) ? 1 : 0;
+	events.pad_l = (g_context.keyboard_accumulator[KA_KEY_LEFT] >= 128) ? 1 : 0;
+	events.pad_r = (g_context.keyboard_accumulator[KA_KEY_RIGHT] >= 128) ? 1 : 0;
+
+	events.pad.x = 0.0f; // TODO
+	events.pad.y = 0.0f;
 
 	// Windows iteration
 	float delta = 0.0f;
-	int live_windows = 0;
+	int alive_windows = 0;
 
 	for (size_t i = 0; i < MAX_WINDOWS; i++)
 	{
@@ -337,7 +335,7 @@ int kaContextUpdate(struct jaStatus* st)
 
 			if (g_context.focused_window == window)
 			{
-				window->frame_callback(window, g_context.events, delta, window->user_data, &callback_st);
+				window->frame_callback(window, events, delta, window->user_data, &callback_st);
 				window->last_frame_ms = SDL_GetTicks();
 			}
 			else if ((g_context.frame_no % 4) == 0) // HARDCODED
@@ -350,31 +348,39 @@ int kaContextUpdate(struct jaStatus* st)
 				goto callback_failure;
 		}
 
-		// Function keys callback (if any)
-		if (window->function_callback != NULL && function_keys != 0 && g_context.focused_window == window)
+		// Keyboard callback (if any)
+		if (window->keyboard_callback != NULL)
 		{
-			int key_no = 1;
-
-			for (uint16_t a = function_keys; a != 0; a = a >> 1)
+			for (unsigned i = 0; i < ACCUMULATOR_LEN; i++)
 			{
 				callback_st.code = JA_STATUS_SUCCESS; // Assume success
 
-				if ((a & 0x01) == 1)
-					window->function_callback(window, key_no, window->user_data, &callback_st);
+				if (g_context.keyboard_accumulator[i] == KEY_PRESS_CODE ||
+				    g_context.keyboard_accumulator[i] == KEY_RELEASE_CODE)
+					continue;
+
+				if (g_context.keyboard_accumulator[i] > KEY_PRESS_CODE)
+				{
+					window->keyboard_callback(window, i, KA_PRESSED, window->user_data, &callback_st);
+					g_context.keyboard_accumulator[i] -= 1;
+				}
+				else
+				{
+					window->keyboard_callback(window, i, KA_RELEASED, window->user_data, &callback_st);
+					g_context.keyboard_accumulator[i] -= 1;
+				}
 
 				if (callback_st.code != JA_STATUS_SUCCESS)
 					goto callback_failure;
-
-				key_no += 1;
 			}
 		}
 
 		// Window survives all callbacks!
-		live_windows += 1;
+		alive_windows += 1;
 	}
 
 	// Bye!
-	if (live_windows == 0)
+	if (alive_windows == 0)
 		return 1;
 
 	g_context.frame_no += 1;
@@ -401,4 +407,10 @@ inline size_t kaGetFrame()
 inline void kaSleep(unsigned ms)
 {
 	SDL_Delay(ms);
+}
+
+
+inline bool kaWindowInFocus(const struct kaWindow* window)
+{
+	return (g_context.focused_window == window) ? true : false;
 }

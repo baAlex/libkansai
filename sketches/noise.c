@@ -75,7 +75,8 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	struct WindowData* data = user_data;
 
 	kaSeed(&data->rng, 0);
-	kaSetCameraMatrix(w, jaMatrix4Orthographic(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f), (struct jaVector3){0.0f, 0.0f, 0.0f});
+	kaSetCameraMatrix(w, jaMatrix4Orthographic(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f),
+	                  (struct jaVector3){0.0f, 0.0f, 0.0f});
 
 	// Create an image
 	if ((data->image = jaImageCreate(JA_IMAGE_U8, SIZE, SIZE, 1)) == NULL)
@@ -151,6 +152,12 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 }
 
 
+static void sKeyboard(struct kaWindow* w, enum kaKey key, enum kaKeyMode mode, void* user_data, struct jaStatus* st)
+{
+	printf("%s key %i\n", (mode == KA_PRESSED) ? "Pressed" : "Released", key);
+}
+
+
 int main()
 {
 	struct jaStatus st = {0};
@@ -159,7 +166,7 @@ int main()
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NULL, sInit, sFrame, NULL, NULL, NULL, &data, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, NULL, sKeyboard, NULL, &data, &st) != 0)
 		goto return_failure;
 
 	while (1)

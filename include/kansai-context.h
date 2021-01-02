@@ -30,6 +30,108 @@
 
 struct kaWindow;
 
+enum kaKey // A subset of 'SDL_scancode.h'
+{
+	KA_KEY_A = 4,
+	KA_KEY_B = 5,
+	KA_KEY_C = 6,
+	KA_KEY_D = 7,
+	KA_KEY_E = 8,
+	KA_KEY_F = 9,
+	KA_KEY_G = 10,
+	KA_KEY_H = 11,
+	KA_KEY_I = 12,
+	KA_KEY_J = 13,
+	KA_KEY_K = 14,
+	KA_KEY_L = 15,
+	KA_KEY_M = 16,
+	KA_KEY_N = 17,
+	KA_KEY_O = 18,
+	KA_KEY_P = 19,
+	KA_KEY_Q = 20,
+	KA_KEY_R = 21,
+	KA_KEY_S = 22,
+	KA_KEY_T = 23,
+	KA_KEY_U = 24,
+	KA_KEY_V = 25,
+	KA_KEY_W = 26,
+	KA_KEY_X = 27,
+	KA_KEY_Y = 28,
+	KA_KEY_Z = 29,
+
+	KA_KEY_1 = 30,
+	KA_KEY_2 = 31,
+	KA_KEY_3 = 32,
+	KA_KEY_4 = 33,
+	KA_KEY_5 = 34,
+	KA_KEY_6 = 35,
+	KA_KEY_7 = 36,
+	KA_KEY_8 = 37,
+	KA_KEY_9 = 38,
+	KA_KEY_0 = 39,
+
+	KA_KEY_RETURN = 40,
+	KA_KEY_ESCAPE = 41,
+	KA_KEY_BACKSPACE = 42,
+	KA_KEY_TAB = 43,
+	KA_KEY_SPACE = 44,
+
+	KA_KEY_MINUS = 45,
+	KA_KEY_EQUALS = 46,
+	KA_KEY_LEFTBRACKET = 47,
+	KA_KEY_RIGHTBRACKET = 48,
+	KA_KEY_BACKSLASH = 49,
+	KA_KEY_SEMICOLON = 51,
+	KA_KEY_APOSTROPHE = 52,
+	KA_KEY_GRAVE = 53,
+	KA_KEY_COMMA = 54,
+	KA_KEY_PERIOD = 55,
+	KA_KEY_SLASH = 56,
+
+	KA_KEY_CAPSLOCK = 57,
+
+	KA_KEY_F1 = 58,
+	KA_KEY_F2 = 59,
+	KA_KEY_F3 = 60,
+	KA_KEY_F4 = 61,
+	KA_KEY_F5 = 62,
+	KA_KEY_F6 = 63,
+	KA_KEY_F7 = 64,
+	KA_KEY_F8 = 65,
+	KA_KEY_F9 = 66,
+	KA_KEY_F10 = 67,
+	KA_KEY_F11 = 68,
+	KA_KEY_F12 = 69,
+
+	KA_KEY_RIGHT = 79,
+	KA_KEY_LEFT = 80,
+	KA_KEY_DOWN = 81,
+	KA_KEY_UP = 82,
+
+	KA_KEY_KP_DIVIDE = 84,
+	KA_KEY_KP_MULTIPLY = 85,
+	KA_KEY_KP_MINUS = 86,
+	KA_KEY_KP_PLUS = 87,
+	KA_KEY_KP_ENTER = 88,
+	KA_KEY_KP_1 = 89,
+	KA_KEY_KP_2 = 90,
+	KA_KEY_KP_3 = 91,
+	KA_KEY_KP_4 = 92,
+	KA_KEY_KP_5 = 93,
+	KA_KEY_KP_6 = 94,
+	KA_KEY_KP_7 = 95,
+	KA_KEY_KP_8 = 96,
+	KA_KEY_KP_9 = 97,
+	KA_KEY_KP_0 = 98,
+	KA_KEY_KP_PERIOD = 99,
+};
+
+enum kaKeyMode
+{
+	KA_PRESSED,
+	KA_RELEASED
+};
+
 struct kaEvents
 {
 	uint8_t a : 1;
@@ -108,15 +210,17 @@ KA_EXPORT void kaSleep(unsigned ms);
 
 // context/window.c
 
-KA_EXPORT int kaWindowCreate(const struct jaConfiguration*, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
-                             void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
-                             void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
-                             void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*),
-                             void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus*);
+KA_EXPORT int
+kaWindowCreate(const struct jaConfiguration*, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
+               void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
+               void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
+               void (*keyboard_callback)(struct kaWindow*, enum kaKey, enum kaKeyMode, void*, struct jaStatus*),
+               void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus*);
 
 KA_EXPORT void kaWindowDelete(struct kaWindow*);
 KA_EXPORT struct jaImage* kaScreenshot(struct kaWindow*, struct jaStatus*);
 KA_EXPORT void kaSwitchFullscreen(struct kaWindow*);
+KA_EXPORT bool kaWindowInFocus(const struct kaWindow*);
 
 // context/objects.c
 

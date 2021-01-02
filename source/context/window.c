@@ -47,7 +47,7 @@ static inline void sPrintWarning(struct jaStatus* st) // Only make noise if the 
 int kaWindowCreate(const struct jaConfiguration* cfg, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
                    void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
                    void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
-                   void (*function_callback)(struct kaWindow*, int, void*, struct jaStatus*),
+                   void (*keyboard_callback)(struct kaWindow*, enum kaKey, enum kaKeyMode, void*, struct jaStatus*),
                    void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus* st)
 {
 	struct kaWindow* window = NULL;
@@ -86,7 +86,7 @@ int kaWindowCreate(const struct jaConfiguration* cfg, void (*init_callback)(stru
 
 	window->frame_callback = frame_callback;
 	window->resize_callback = resize_callback;
-	window->function_callback = function_callback;
+	window->keyboard_callback = keyboard_callback;
 	window->close_callback = close_callback;
 	window->user_data = user_data;
 
@@ -187,7 +187,8 @@ int kaWindowCreate(const struct jaConfiguration* cfg, void (*init_callback)(stru
 		kaSetTexture(window, 0, &window->default_texture);
 
 		kaSetWorld(window, jaMatrix4Identity());
-		kaSetCameraMatrix(window, jaMatrix4Orthographic(-1.0f, +1.0f, -1.0f, +1.0f, 0.0f, 2.0f), (struct jaVector3){0.0f, 0.0f, 0.0f});
+		kaSetCameraMatrix(window, jaMatrix4Orthographic(-1.0f, +1.0f, -1.0f, +1.0f, 0.0f, 2.0f),
+		                  (struct jaVector3){0.0f, 0.0f, 0.0f});
 		kaSetLocal(window, jaMatrix4Identity());
 
 		kaSetCleanColor(window, (struct kaRgb){0.0f, 0.0f, 0.0f});
