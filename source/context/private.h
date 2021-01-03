@@ -32,10 +32,10 @@ struct kaWindow
 	bool is_fullscreen;
 	uint32_t last_frame_ms;
 
-	struct jaMatrix4 world;
-	struct jaMatrix4 camera;
-	struct jaVector3 camera_position;
-	struct jaMatrix4 local;
+	struct jaMatrixF4 world;
+	struct jaMatrixF4 camera;
+	struct jaVectorF3 camera_position;
+	struct jaMatrixF4 local;
 
 	const struct kaProgram* current_program;
 	const struct kaVertices* current_vertices;

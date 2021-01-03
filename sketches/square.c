@@ -13,7 +13,7 @@
 
 struct WindowData
 {
-	struct jaVector2 position;
+	struct jaVectorF2 position;
 	struct kaXorshift rng;
 	bool start_press;
 };
@@ -24,12 +24,12 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	(void)st;
 	struct WindowData* data = user_data;
 
-	data->position = (struct jaVector2){160.0f, 120.0f};
+	data->position = (struct jaVectorF2){160.0f, 120.0f};
 	kaSeed(&data->rng, 0);
 
-	kaSetWorld(w, jaMatrix4Identity());
-	kaSetLocal(w, jaMatrix4RotateZ(jaMatrix4Identity(), jaDegToRad(45.0f)));
-	kaSetCameraMatrix(w, jaMatrix4Orthographic(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f), (struct jaVector3){0.0f, 0.0f, 0.0f});
+	kaSetWorld(w, jaMatrixF4Identity());
+	kaSetLocal(w, jaMatrixRotateZF4(jaMatrixF4Identity(), jaDegToRad(45.0f)));
+	kaSetCameraMatrix(w, jaMatrixOrthographicF4(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f), (struct jaVectorF3){0.0f, 0.0f, 0.0f});
 }
 
 
@@ -38,10 +38,10 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 	(void)st;
 	struct WindowData* data = user_data;
 
-	if (jaVector2Length(e.pad) > EPSILON)
+	if (jaVectorLengthF2(e.pad) > EPSILON)
 	{
-		struct jaVector2 movement = jaVector2Scale(jaVector2Normalize(e.pad), 4.0f * delta);
-		data->position = jaVector2Add(data->position, movement);
+		struct jaVectorF2 movement = jaVectorScaleF2(jaVectorNormalizeF2(e.pad), 4.0f * delta);
+		data->position = jaVectorAddF2(data->position, movement);
 	}
 
 	if (e.start == false)

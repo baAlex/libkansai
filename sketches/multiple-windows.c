@@ -33,18 +33,18 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 	struct WindowData* data = user_data;
 	jaStatusSet(st, "sFrame", JA_STATUS_SUCCESS, NULL);
 
-	struct jaVector3 pos;
+	struct jaVectorF3 pos;
 	pos.x = sinf(data->phase);
 	pos.y = sinf(data->phase / 4.0f);
 
-	kaSetLocal(w, jaMatrix4Translate(pos));
+	kaSetLocal(w, jaMatrixTranslationF4(pos));
 	kaDrawDefault(w);
 
 	data->phase += 0.125f * delta;
 
 	if (data->id == 0)
 	{
-		kaSetLocal(w, jaMatrix4Identity());
+		kaSetLocal(w, jaMatrixF4Identity());
 		kaDrawDefault(w);
 	}
 

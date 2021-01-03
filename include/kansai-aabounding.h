@@ -21,25 +21,25 @@
 
 struct kaAABBox
 {
-	struct jaVector3 min;
-	struct jaVector3 max;
+	struct jaVectorF3 min;
+	struct jaVectorF3 max;
 };
 
 struct kaAABRectangle
 {
-	struct jaVector2 min;
-	struct jaVector2 max;
+	struct jaVectorF2 min;
+	struct jaVectorF2 max;
 };
 
 struct kaSphere
 {
-	struct jaVector3 origin;
+	struct jaVectorF3 origin;
 	float radius;
 };
 
 struct kaCircle
 {
-	struct jaVector2 origin;
+	struct jaVectorF2 origin;
 	float radius;
 };
 
@@ -52,8 +52,8 @@ KA_EXPORT bool kaAABCollisionBoxSphere(struct kaAABBox, struct kaSphere);
 KA_EXPORT struct kaAABRectangle kaAABToRectangle(struct kaAABBox);
 KA_EXPORT struct kaAABBox kaAABToBox(struct kaAABRectangle, float min_z, float max_z);
 
-KA_EXPORT struct jaVector2 kaAABMiddleRect(struct kaAABRectangle);
-KA_EXPORT struct jaVector3 kaAABMiddleBox(struct kaAABBox);
+KA_EXPORT struct jaVectorF2 kaAABMiddleRect(struct kaAABRectangle);
+KA_EXPORT struct jaVectorF3 kaAABMiddleBox(struct kaAABBox);
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 

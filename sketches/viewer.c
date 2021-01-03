@@ -78,9 +78,9 @@ void sResize(struct kaWindow* w, int width, int height, void* raw_data, struct j
 
 	// Camera matrix, just centre the origin in the window middle
 	kaSetCameraMatrix(w,
-	                  jaMatrix4Orthographic(-((float)width / 2.0f), ((float)width / 2.0f), -((float)height / 2.0f),
+	                  jaMatrixOrthographicF4(-((float)width / 2.0f), ((float)width / 2.0f), -((float)height / 2.0f),
 	                                        ((float)height / 2.0f), 0.0f, 2.0f),
-	                  (struct jaVector3){0.0f, 0.0f, 0.0f});
+	                  (struct jaVectorF3){0.0f, 0.0f, 0.0f});
 
 	// Calculate a scale respecting the aspect ratio
 	float scale = ((float)width / (float)height > aspect) ? (float)height / (float)data->image->height
@@ -88,7 +88,7 @@ void sResize(struct kaWindow* w, int width, int height, void* raw_data, struct j
 
 	// Scale the local matrix for the screen
 	kaSetLocal(w,
-	           jaMatrix4ScaleAnsio(jaMatrix4Identity(), (struct jaVector3){(float)data->image->width * scale,
+	           jaMatrixScaleAnsioF4(jaMatrixF4Identity(), (struct jaVectorF3){(float)data->image->width * scale,
 	                                                                       (float)data->image->height * scale, 1.0f}));
 }
 

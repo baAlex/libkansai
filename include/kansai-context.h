@@ -147,7 +147,7 @@ struct kaEvents
 	uint8_t pad_l : 1;
 	uint8_t pad_r : 1;
 
-	struct jaVector2 pad;
+	struct jaVectorF2 pad;
 };
 
 struct kaProgram
@@ -157,9 +157,9 @@ struct kaProgram
 
 struct kaVertex
 {
-	struct jaVector3 position;
+	struct jaVectorF3 position;
 	struct kaRgba color;
-	struct jaVector2 uv;
+	struct jaVectorF2 uv;
 };
 
 struct kaVertices
@@ -247,10 +247,10 @@ KA_EXPORT void kaSetProgram(struct kaWindow*, const struct kaProgram*);
 KA_EXPORT void kaSetVertices(struct kaWindow*, const struct kaVertices*);
 KA_EXPORT void kaSetTexture(struct kaWindow*, int unit, const struct kaTexture*);
 
-KA_EXPORT void kaSetWorld(struct kaWindow*, struct jaMatrix4);
-KA_EXPORT void kaSetCameraLookAt(struct kaWindow*, struct jaVector3 target, struct jaVector3 origin);
-KA_EXPORT void kaSetCameraMatrix(struct kaWindow*, struct jaMatrix4 matrix, struct jaVector3 origin);
-KA_EXPORT void kaSetLocal(struct kaWindow*, struct jaMatrix4);
+KA_EXPORT void kaSetWorld(struct kaWindow*, struct jaMatrixF4);
+KA_EXPORT void kaSetCameraLookAt(struct kaWindow*, struct jaVectorF3 target, struct jaVectorF3 origin);
+KA_EXPORT void kaSetCameraMatrix(struct kaWindow*, struct jaMatrixF4 matrix, struct jaVectorF3 origin);
+KA_EXPORT void kaSetLocal(struct kaWindow*, struct jaMatrixF4);
 
 KA_EXPORT void kaSetCleanColor(struct kaWindow*, struct kaRgb);
 

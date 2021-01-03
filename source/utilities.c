@@ -34,7 +34,7 @@ SOFTWARE.
 #include "kansai-utilities.h"
 
 
-void kaVectorAxes(struct jaVector3 angle, struct jaVector3* forward, struct jaVector3* left, struct jaVector3* up)
+void kaVectorAxes(struct jaVectorF3 angle, struct jaVectorF3* forward, struct jaVectorF3* left, struct jaVectorF3* up)
 {
 	// http://www.songho.ca/opengl/gl_anglestoaxes.html#anglestoaxes
 	// Saving all differences on axis disposition

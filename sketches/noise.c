@@ -75,8 +75,8 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 	struct WindowData* data = user_data;
 
 	kaSeed(&data->rng, 0);
-	kaSetCameraMatrix(w, jaMatrix4Orthographic(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f),
-	                  (struct jaVector3){0.0f, 0.0f, 0.0f});
+	kaSetCameraMatrix(w, jaMatrixOrthographicF4(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f),
+	                  (struct jaVectorF3){0.0f, 0.0f, 0.0f});
 
 	// Create an image
 	if ((data->image = jaImageCreate(JA_IMAGE_U8, SIZE, SIZE, 1)) == NULL)

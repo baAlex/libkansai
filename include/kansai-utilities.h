@@ -20,7 +20,7 @@
 #include "japan-vector.h"
 #include "japan-utilities.h"
 
-KA_EXPORT void kaVectorAxes(struct jaVector3 angle, struct jaVector3* forward, struct jaVector3* left,
-                            struct jaVector3* up);
+KA_EXPORT void kaVectorAxes(struct jaVectorF3 angle, struct jaVectorF3* forward, struct jaVectorF3* left,
+                            struct jaVectorF3* up);
 
 #endif

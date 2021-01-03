@@ -85,16 +85,16 @@ inline struct kaAABBox kaAABToBox(struct kaAABRectangle rect, float min_z, float
 }
 
 
-inline struct jaVector2 kaAABMiddleRect(struct kaAABRectangle rect)
+inline struct jaVectorF2 kaAABMiddleRect(struct kaAABRectangle rect)
 {
-	return (struct jaVector2){.x = (rect.min.x + (rect.max.x - rect.min.x) / 2.0f),
+	return (struct jaVectorF2){.x = (rect.min.x + (rect.max.x - rect.min.x) / 2.0f),
 	                          .y = (rect.min.y + (rect.max.y - rect.min.y) / 2.0f)};
 }
 
 
-inline struct jaVector3 kaAABMiddleBox(struct kaAABBox box)
+inline struct jaVectorF3 kaAABMiddleBox(struct kaAABBox box)
 {
-	return (struct jaVector3){.x = (box.min.x + (box.max.x - box.min.x) / 2.0f),
+	return (struct jaVectorF3){.x = (box.min.x + (box.max.x - box.min.x) / 2.0f),
 	                          .y = (box.min.y + (box.max.y - box.min.y) / 2.0f),
 	                          .z = (box.min.z + (box.max.z - box.min.z) / 2.0f)};
 }

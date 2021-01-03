@@ -104,25 +104,25 @@ inline void kaSetTexture(struct kaWindow* window, int unit, const struct kaTextu
 }
 
 
-inline void kaSetWorld(struct kaWindow* window, struct jaMatrix4 matrix)
+inline void kaSetWorld(struct kaWindow* window, struct jaMatrixF4 matrix)
 {
 	if (window == NULL)
 		return;
 
-	memcpy(&window->world, &matrix, sizeof(struct jaMatrix4));
+	memcpy(&window->world, &matrix, sizeof(struct jaMatrixF4));
 
 	if (window->current_program != NULL)
 		glUniformMatrix4fv(window->uniform.world, 1, GL_FALSE, &window->world.e[0][0]);
 }
 
 
-inline void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, struct jaVector3 origin)
+inline void kaSetCameraLookAt(struct kaWindow* window, struct jaVectorF3 target, struct jaVectorF3 origin)
 {
 	if (window == NULL)
 		return;
 
 	window->camera_position = origin;
-	window->camera = jaMatrix4LookAt(origin, target, (struct jaVector3){0.0f, 0.0f, 1.0f});
+	window->camera = jaMatrixLookAtF4(origin, target, (struct jaVectorF3){0.0f, 0.0f, 1.0f});
 
 	if (window->current_program != NULL)
 	{
@@ -132,7 +132,7 @@ inline void kaSetCameraLookAt(struct kaWindow* window, struct jaVector3 target, 
 }
 
 
-inline void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, struct jaVector3 origin)
+inline void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrixF4 matrix, struct jaVectorF3 origin)
 {
 	if (window == NULL)
 		return;
@@ -148,12 +148,12 @@ inline void kaSetCameraMatrix(struct kaWindow* window, struct jaMatrix4 matrix, 
 }
 
 
-inline void kaSetLocal(struct kaWindow* window, struct jaMatrix4 matrix)
+inline void kaSetLocal(struct kaWindow* window, struct jaMatrixF4 matrix)
 {
 	if (window == NULL)
 		return;
 
-	memcpy(&window->local, &matrix, sizeof(struct jaMatrix4));
+	memcpy(&window->local, &matrix, sizeof(struct jaMatrixF4));
 
 	if (window->current_program != NULL)
 		glUniformMatrix4fv(window->uniform.local, 1, GL_FALSE, &window->local.e[0][0]);
