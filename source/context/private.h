@@ -23,7 +23,8 @@ struct kaWindow
 {
 	void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*);
 	void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*);
-	void (*keyboard_callback)(struct kaWindow*, enum kaKey, enum kaKeyMode, void*, struct jaStatus*);
+	void (*keyboard_callback)(struct kaWindow*, enum kaKey, enum kaGesture, void*, struct jaStatus*);
+	void (*mouse_callback)(struct kaWindow*, int, enum kaGesture, void*, struct jaStatus*);
 	void (*close_callback)(struct kaWindow*, void*);
 	void* user_data;
 

@@ -29,7 +29,8 @@ static void sInit(struct kaWindow* w, void* user_data, struct jaStatus* st)
 
 	kaSetWorld(w, jaMatrixF4Identity());
 	kaSetLocal(w, jaMatrixRotateZF4(jaMatrixF4Identity(), jaDegToRad(45.0f)));
-	kaSetCameraMatrix(w, jaMatrixOrthographicF4(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f), (struct jaVectorF3){0.0f, 0.0f, 0.0f});
+	kaSetCameraMatrix(w, jaMatrixOrthographicF4(-0.5f, +0.5f, -0.5f, +0.5f, 0.0f, 2.0f),
+	                  (struct jaVectorF3){0.0f, 0.0f, 0.0f});
 }
 
 
@@ -88,7 +89,7 @@ int main(int argc, const char* argv[])
 
 		jaConfigurationArgumentsEx(cfg, JA_UTF8, JA_SKIP_FIRST, sArgumentsCallback, argc, argv);
 
-		if (kaWindowCreate(cfg, sInit, sFrame, NULL, NULL, NULL, &data, &st) != 0)
+		if (kaWindowCreate(cfg, sInit, sFrame, NULL, NULL, NULL, NULL, &data, &st) != 0)
 			goto return_failure;
 
 		jaConfigurationDelete(cfg);

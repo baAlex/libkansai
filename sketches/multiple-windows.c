@@ -47,12 +47,6 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 		kaSetLocal(w, jaMatrixF4Identity());
 		kaDrawDefault(w);
 	}
-
-	if (e.x != data->x_press)
-	{
-		printf("Event X = %s on window %i\n", (e.x == true) ? "true" : "false", data->id);
-		data->x_press = e.x;
-	}
 }
 
 
@@ -66,7 +60,7 @@ static void sResize(struct kaWindow* w, int width, int height, void* user_data, 
 }
 
 
-static void sKeyboard(struct kaWindow* w, enum kaKey key, enum kaKeyMode mode, void* user_data, struct jaStatus* st)
+static void sKeyboard(struct kaWindow* w, enum kaKey key, enum kaGesture mode, void* user_data, struct jaStatus* st)
 {
 	struct WindowData* data = user_data;
 
@@ -95,6 +89,17 @@ static void sKeyboard(struct kaWindow* w, enum kaKey key, enum kaKeyMode mode, v
 }
 
 
+static void sMouse(struct kaWindow* w, int button, enum kaGesture mode, void* user_data, struct jaStatus* st)
+{
+	(void)w;
+	(void)st;
+
+	struct WindowData* data = user_data;
+
+	printf("Window %i, %s mouse button %i\n", data->id, (mode == KA_PRESSED) ? "Pressed" : "Released", button);
+}
+
+
 static void sClose(struct kaWindow* w, void* user_data)
 {
 	(void)w;
@@ -120,10 +125,10 @@ int main()
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sKeyboard, sClose, &a, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sKeyboard, sMouse, sClose, &a, &st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sKeyboard, sClose, &b, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sKeyboard, sMouse, sClose, &b, &st) != 0)
 		goto return_failure;
 
 	while (1)

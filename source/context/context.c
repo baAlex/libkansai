@@ -31,11 +31,12 @@ SOFTWARE.
 #include "private.h"
 
 
-#define ACCUMULATOR_LEN 128
+#define KEY_ACCUMULATOR_LEN 128
+#define MOUSE_ACCUMULATOR_LEN 4 // Buttons
 #define MAX_WINDOWS 4
 
-#define KEY_PRESS_CODE 128
-#define KEY_RELEASE_CODE 0
+#define PRESS_CODE 128
+#define RELEASE_CODE 0
 
 
 struct kaContext
@@ -45,7 +46,8 @@ struct kaContext
 	bool glad_initialized;
 	int sdl_references;
 
-	uint8_t keyboard_accumulator[ACCUMULATOR_LEN];
+	uint8_t keyboard_accumulator[KEY_ACCUMULATOR_LEN];
+	uint8_t mouse_accumulator[MOUSE_ACCUMULATOR_LEN];
 
 	uint8_t windows_no;
 	struct kaWindow* windows[MAX_WINDOWS];
@@ -198,24 +200,6 @@ void kaContextStop()
 }
 
 
-static inline void sKeyboardPress(SDL_Scancode sc)
-{
-	if (sc > ACCUMULATOR_LEN) // We only support an subset
-		return;
-
-	g_context.keyboard_accumulator[sc] = KEY_PRESS_CODE + g_context.windows_no;
-}
-
-
-static inline void sKeyboardRelease(SDL_Scancode sc)
-{
-	if (sc > ACCUMULATOR_LEN)
-		return;
-
-	g_context.keyboard_accumulator[sc] = KEY_RELEASE_CODE + g_context.windows_no;
-}
-
-
 int kaContextUpdate(struct jaStatus* st)
 {
 	struct kaWindow* window = NULL;
@@ -224,16 +208,29 @@ int kaContextUpdate(struct jaStatus* st)
 
 	jaStatusSet(st, "kaContextUpdate", JA_STATUS_SUCCESS, NULL);
 
-	// Receive and process input
+	// Receive, and save input events in accumulators for both the
+	// keyboard and mouse; also save 'marks' for windows events
 	while (SDL_PollEvent(&e) != 0)
 	{
 		if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
 		{
-			sKeyboardPress(e.key.keysym.scancode);
+			if (e.key.keysym.scancode <= KEY_ACCUMULATOR_LEN)
+				g_context.keyboard_accumulator[e.key.keysym.scancode] = PRESS_CODE + g_context.windows_no;
 		}
 		else if (e.type == SDL_KEYUP)
 		{
-			sKeyboardRelease(e.key.keysym.scancode);
+			if (e.key.keysym.scancode <= KEY_ACCUMULATOR_LEN)
+				g_context.keyboard_accumulator[e.key.keysym.scancode] = RELEASE_CODE + g_context.windows_no;
+		}
+		else if (e.type == SDL_MOUSEBUTTONDOWN)
+		{
+			if (e.button.button <= MOUSE_ACCUMULATOR_LEN)
+				g_context.mouse_accumulator[e.button.button] = PRESS_CODE + g_context.windows_no;
+		}
+		else if (e.type == SDL_MOUSEBUTTONUP)
+		{
+			if (e.button.button <= MOUSE_ACCUMULATOR_LEN)
+				g_context.mouse_accumulator[e.button.button] = RELEASE_CODE + g_context.windows_no;
 		}
 		else if (e.type == SDL_WINDOWEVENT)
 		{
@@ -259,27 +256,31 @@ int kaContextUpdate(struct jaStatus* st)
 		}
 	}
 
+	// Rather than recive multiple callbacks, there is an option to
+	// recive a table instead, it containts frequently used input
 	struct kaEvents events = {0};
 
-	events.a = (g_context.keyboard_accumulator[KA_KEY_RETURN] >= 128) ? 1 : 0;
-	events.b = (g_context.keyboard_accumulator[KA_KEY_BACKSPACE] >= 128) ? 1 : 0;
-	events.x = (g_context.keyboard_accumulator[KA_KEY_Z] >= 128) ? 1 : 0;
-	events.y = (g_context.keyboard_accumulator[KA_KEY_X] >= 128) ? 1 : 0;
+	events.a = (g_context.keyboard_accumulator[KA_KEY_RETURN] >= PRESS_CODE) ? 1 : 0;
+	events.b = (g_context.keyboard_accumulator[KA_KEY_BACKSPACE] >= PRESS_CODE) ? 1 : 0;
+	events.x = (g_context.keyboard_accumulator[KA_KEY_Z] >= PRESS_CODE) ? 1 : 0;
+	events.y = (g_context.keyboard_accumulator[KA_KEY_X] >= PRESS_CODE) ? 1 : 0;
 
-	events.select = (g_context.keyboard_accumulator[KA_KEY_SPACE] >= 128) ? 1 : 0;
-	events.start = (g_context.keyboard_accumulator[KA_KEY_ESCAPE] >= 128) ? 1 : 0;
+	events.select = (g_context.keyboard_accumulator[KA_KEY_SPACE] >= PRESS_CODE) ? 1 : 0;
+	events.start = (g_context.keyboard_accumulator[KA_KEY_ESCAPE] >= PRESS_CODE) ? 1 : 0;
 
-	events.pad_u = (g_context.keyboard_accumulator[KA_KEY_UP] >= 128) ? 1 : 0;
-	events.pad_d = (g_context.keyboard_accumulator[KA_KEY_DOWN] >= 128) ? 1 : 0;
-	events.pad_l = (g_context.keyboard_accumulator[KA_KEY_LEFT] >= 128) ? 1 : 0;
-	events.pad_r = (g_context.keyboard_accumulator[KA_KEY_RIGHT] >= 128) ? 1 : 0;
+	events.pad_u = (g_context.keyboard_accumulator[KA_KEY_UP] >= PRESS_CODE) ? 1 : 0;
+	events.pad_d = (g_context.keyboard_accumulator[KA_KEY_DOWN] >= PRESS_CODE) ? 1 : 0;
+	events.pad_l = (g_context.keyboard_accumulator[KA_KEY_LEFT] >= PRESS_CODE) ? 1 : 0;
+	events.pad_r = (g_context.keyboard_accumulator[KA_KEY_RIGHT] >= PRESS_CODE) ? 1 : 0;
 
 	events.pad.x = 0.0f; // TODO
 	events.pad.y = 0.0f;
 
-	// Windows iteration
+	// Iterate windows
 	float delta = 0.0f;
 	int alive_windows = 0;
+	int w = 0;
+	int h = 0;
 
 	for (size_t i = 0; i < MAX_WINDOWS; i++)
 	{
@@ -296,7 +297,7 @@ int kaContextUpdate(struct jaStatus* st)
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		}
 
-		// Delete window, delete callback
+		// Delete window / delete callback
 		if (window->delete_mark == true)
 		{
 			if (window->close_callback != NULL)
@@ -306,21 +307,18 @@ int kaContextUpdate(struct jaStatus* st)
 			continue;
 		}
 
-		// Resize, resize callback
+		// Resize / resize callback
 		if (window->resized_mark == true)
 		{
-			int window_w = 0;
-			int window_h = 0;
-
 			window->resized_mark = false;
 
-			SDL_GetWindowSize(window->sdl_window, &window_w, &window_h);
-			glViewport(0, 0, window_w, window_h);
+			SDL_GetWindowSize(window->sdl_window, &w, &h);
+			glViewport(0, 0, w, h);
 
 			if (window->resize_callback != NULL)
 			{
 				callback_st.code = JA_STATUS_SUCCESS; // Assume success
-				window->resize_callback(window, window_w, window_h, window->user_data, &callback_st);
+				window->resize_callback(window, w, h, window->user_data, &callback_st);
 
 				if (callback_st.code != JA_STATUS_SUCCESS)
 					goto callback_failure;
@@ -351,15 +349,15 @@ int kaContextUpdate(struct jaStatus* st)
 		// Keyboard callback (if any)
 		if (window->keyboard_callback != NULL)
 		{
-			for (unsigned i = 0; i < ACCUMULATOR_LEN; i++)
+			for (unsigned i = 0; i < KEY_ACCUMULATOR_LEN; i++)
 			{
 				callback_st.code = JA_STATUS_SUCCESS; // Assume success
 
-				if (g_context.keyboard_accumulator[i] == KEY_PRESS_CODE ||
-				    g_context.keyboard_accumulator[i] == KEY_RELEASE_CODE)
+				if (g_context.keyboard_accumulator[i] == PRESS_CODE ||
+				    g_context.keyboard_accumulator[i] == RELEASE_CODE)
 					continue;
 
-				if (g_context.keyboard_accumulator[i] > KEY_PRESS_CODE)
+				if (g_context.keyboard_accumulator[i] > PRESS_CODE)
 				{
 					window->keyboard_callback(window, i, KA_PRESSED, window->user_data, &callback_st);
 					g_context.keyboard_accumulator[i] -= 1;
@@ -368,6 +366,32 @@ int kaContextUpdate(struct jaStatus* st)
 				{
 					window->keyboard_callback(window, i, KA_RELEASED, window->user_data, &callback_st);
 					g_context.keyboard_accumulator[i] -= 1;
+				}
+
+				if (callback_st.code != JA_STATUS_SUCCESS)
+					goto callback_failure;
+			}
+		}
+
+		// Mouse callback (if any)
+		if (window->mouse_callback != NULL)
+		{
+			for (int i = 0; i < MOUSE_ACCUMULATOR_LEN; i++)
+			{
+				callback_st.code = JA_STATUS_SUCCESS; // Assume success
+
+				if (g_context.mouse_accumulator[i] == PRESS_CODE || g_context.mouse_accumulator[i] == RELEASE_CODE)
+					continue;
+
+				if (g_context.mouse_accumulator[i] > PRESS_CODE)
+				{
+					window->mouse_callback(window, i, KA_PRESSED, window->user_data, &callback_st);
+					g_context.mouse_accumulator[i] -= 1;
+				}
+				else
+				{
+					window->mouse_callback(window, i, KA_RELEASED, window->user_data, &callback_st);
+					g_context.mouse_accumulator[i] -= 1;
 				}
 
 				if (callback_st.code != JA_STATUS_SUCCESS)

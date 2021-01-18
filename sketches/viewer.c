@@ -69,27 +69,34 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* raw
 }
 
 
+#define KA_VECTORF3_ZERO ((struct jaVectorF3){0.0f, 0.0f, 0.0f})
+
+
 void sResize(struct kaWindow* w, int width, int height, void* raw_data, struct jaStatus* st)
 {
 	(void)st;
 
 	struct WindowData* data = raw_data;
-	float aspect = (float)data->image->width / (float)data->image->height;
+	struct jaMatrixF4 m;
+
+	float image_aspect = (float)data->image->width / (float)data->image->height;
+	float window_aspect = (float)width / (float)height;
+	float half_width = (float)width * 0.5f;
+	float half_height = (float)height * 0.5f;
 
 	// Camera matrix, just centre the origin in the window middle
-	kaSetCameraMatrix(w,
-	                  jaMatrixOrthographicF4(-((float)width / 2.0f), ((float)width / 2.0f), -((float)height / 2.0f),
-	                                        ((float)height / 2.0f), 0.0f, 2.0f),
-	                  (struct jaVectorF3){0.0f, 0.0f, 0.0f});
+	m = jaMatrixOrthographicF4(-half_width, half_width, -half_height, half_height, 0.0f, 2.0f);
+	kaSetCameraMatrix(w, m, KA_VECTORF3_ZERO);
 
-	// Calculate a scale respecting the aspect ratio
-	float scale = ((float)width / (float)height > aspect) ? (float)height / (float)data->image->height
-	                                                      : (float)width / (float)data->image->width;
+	// Calculate a scale according to the aspect ratio
+	float scale = (window_aspect > image_aspect) ? (float)height / (float)data->image->height
+	                                             : (float)width / (float)data->image->width;
 
 	// Scale the local matrix for the screen
-	kaSetLocal(w,
-	           jaMatrixScaleAnsioF4(jaMatrixF4Identity(), (struct jaVectorF3){(float)data->image->width * scale,
-	                                                                       (float)data->image->height * scale, 1.0f}));
+	m = jaMatrixF4Identity();
+	m = jaMatrixScaleAnsioF4(
+	    m, (struct jaVectorF3){(float)data->image->width * scale, (float)data->image->height * scale, 1.0f});
+	kaSetLocal(w, m);
 }
 
 
@@ -99,6 +106,27 @@ static void sClose(struct kaWindow* w, void* raw_data)
 
 	kaTextureFree(w, &data->texture);
 	kaProgramFree(w, &data->program);
+}
+
+
+static void sKeyboard(struct kaWindow* w, enum kaKey key, enum kaGesture mode, void* user_data, struct jaStatus* st)
+{
+	(void)w;
+	(void)user_data;
+	(void)st;
+
+	if (key == KA_KEY_F11 && mode == KA_RELEASED)
+		kaSwitchFullscreen(w);
+}
+
+
+static void sMouse(struct kaWindow* w, int button, enum kaGesture mode, void* user_data, struct jaStatus* st)
+{
+	(void)w;
+	(void)user_data;
+	(void)st;
+	(void)button;
+	(void)mode;
 }
 
 
@@ -113,7 +141,7 @@ int main(int argc, char* argv[])
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NULL, sInit, sFrame, sResize, NULL, sClose, &data, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, sResize, sKeyboard, sMouse, sClose, &data, &st) != 0)
 		goto return_failure;
 
 	while (1)

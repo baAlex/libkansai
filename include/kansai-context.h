@@ -126,7 +126,7 @@ enum kaKey // A subset of 'SDL_scancode.h'
 	KA_KEY_KP_PERIOD = 99,
 };
 
-enum kaKeyMode
+enum kaGesture
 {
 	KA_PRESSED,
 	KA_RELEASED
@@ -214,7 +214,8 @@ KA_EXPORT int
 kaWindowCreate(const struct jaConfiguration*, void (*init_callback)(struct kaWindow*, void*, struct jaStatus*),
                void (*frame_callback)(struct kaWindow*, struct kaEvents, float, void*, struct jaStatus*),
                void (*resize_callback)(struct kaWindow*, int, int, void*, struct jaStatus*),
-               void (*keyboard_callback)(struct kaWindow*, enum kaKey, enum kaKeyMode, void*, struct jaStatus*),
+               void (*keyboard_callback)(struct kaWindow*, enum kaKey, enum kaGesture, void*, struct jaStatus*),
+               void (*mouse_callback)(struct kaWindow*, int, enum kaGesture, void*, struct jaStatus*),
                void (*close_callback)(struct kaWindow*, void*), void* user_data, struct jaStatus*);
 
 KA_EXPORT void kaWindowDelete(struct kaWindow*);

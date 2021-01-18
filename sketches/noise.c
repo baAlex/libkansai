@@ -152,9 +152,23 @@ static void sFrame(struct kaWindow* w, struct kaEvents e, float delta, void* use
 }
 
 
-static void sKeyboard(struct kaWindow* w, enum kaKey key, enum kaKeyMode mode, void* user_data, struct jaStatus* st)
+static void sKeyboard(struct kaWindow* w, enum kaKey key, enum kaGesture mode, void* user_data, struct jaStatus* st)
 {
+	(void)w;
+	(void)user_data;
+	(void)st;
+
 	printf("%s key %i\n", (mode == KA_PRESSED) ? "Pressed" : "Released", key);
+}
+
+
+static void sMouse(struct kaWindow* w, int button, enum kaGesture mode, void* user_data, struct jaStatus* st)
+{
+	(void)w;
+	(void)user_data;
+	(void)st;
+
+	printf("%s mouse button %i\n", (mode == KA_PRESSED) ? "Pressed" : "Released", button);
 }
 
 
@@ -166,7 +180,7 @@ int main()
 	if (kaContextStart(&st) != 0)
 		goto return_failure;
 
-	if (kaWindowCreate(NULL, sInit, sFrame, NULL, sKeyboard, NULL, &data, &st) != 0)
+	if (kaWindowCreate(NULL, sInit, sFrame, NULL, sKeyboard, sMouse, NULL, &data, &st) != 0)
 		goto return_failure;
 
 	while (1)
